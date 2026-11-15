@@ -58,6 +58,10 @@ jobs:
           projectPath: app
           tagName: ${{ github.ref_name }}
           releaseName: 'Аттестация 1103 ${{ github.ref_name }}'
+          releaseBody: |
+            Как установить и что делать при первом запуске, написано в README: https://github.com/SOJuse/attestat-trainer#readme
+
+            Сборку для Windows делает GitHub, на настоящем компьютере с Windows её пока никто не запускал.
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
