@@ -1,0 +1,18 @@
+/* Цвета взяты из шаблона презентаций Школы 1103. */
+:root {
+  --ink: #13293d;
+  --muted: #6e7f8d;
+  --accent: #0f6cb0;
+  --line: #dce6ee;
+  --soft: #e4eff7;
+  --softer: #eff5fa;
+  --bg: #ffffff;
+  --ok: #357f2c;
+  --bad: #d8332a;
+  --warn: #f0b429;
+
+  --radius: 8px;
+  --sidebar-width: 208px;
+  --font-text: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-text);
+}
