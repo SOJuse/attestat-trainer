@@ -31,7 +31,7 @@ API = "http://actual.pravo.gov.ru:8000/api/ebpi/"
 PAGE = "http://actual.pravo.gov.ru/text.html#hash="
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
 ROOT = pathlib.Path("content/docs")
-ACTUAL_START = "20220701"  # портал ведёт редакции с учётом изменений после этой даты
+ACTUAL_START = ""  # без нижней границы: с датой портал прячет акты, которые давно не менялись
 TTL = 3
 
 
@@ -74,7 +74,10 @@ def actual_redaction(dochash):
     for r in reds:
         if r.get("actual"):
             return r
-    return None
+    # у акта без изменений пометки «актуальная» нет: берём последнюю уже вступившую редакцию с текстом
+    today = datetime.date.today().strftime("%Y%m%d")
+    in_force = [r for r in reds if r.get("hascontent") and r.get("reddate", "9") <= today]
+    return max(in_force, key=lambda r: r["reddate"]) if in_force else None
 
 
 # ---------- HTML → text.md ----------

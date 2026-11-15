@@ -42,6 +42,17 @@ ATTESTATION = [
 ]
 
 
+# Ручные поправки к разбору: у этих позиций номер и дата стоят внутри названия
+# или вид акта не выводится из раздела списка. Ключ — номер в списке литературы.
+OVERRIDES = {
+    3: {"id": "ukaz-809", "kind": "decree", "number": "809", "date": "2022-11-09"},
+    4: {"id": "ukaz-474", "kind": "decree", "number": "474", "date": "2025-07-11"},
+    22: {"id": "zakon-2124-1", "kind": "federal-law", "number": "2124-1", "date": "1991-12-27"},
+    35: {"id": "pp-mos-1018", "kind": "moscow", "number": "1018", "date": "1999-11-09"},
+    51: {"id": "pp-rf-2334", "kind": "government"},
+}
+
+
 def slug(text):
     out = []
     for ch in text.lower():
@@ -134,6 +145,11 @@ def main():
         if m:
             entry["edition_in_list"] = m.group(1).rstrip(".")
         entry["modules"] = r["modules"]
+        fix = OVERRIDES.get(r["n"])
+        if fix:
+            used.discard(entry["id"])
+            entry.update(fix)
+            used.add(entry["id"])
         docs.append(entry)
     for doc_id, title, number, date in ATTESTATION:
         entry = {"id": doc_id, "section": "Аттестация руководителей", "title": title, "kind": "donm"}

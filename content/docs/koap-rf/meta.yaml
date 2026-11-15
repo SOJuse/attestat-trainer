@@ -1,0 +1,17 @@
+id: koap-rf
+title: Кодекс Российской Федерации об административных правонарушениях
+kind: federal-law
+number: 195-ФЗ
+date: '2001-12-30'
+edition: '2026-11-03'
+source_url: http://actual.pravo.gov.ru/text.html#hash=6639c6c6580e8aa0bdf84170d25823669dfb6a4144b03da245ef4889f24765c0
+fetched: '2026-11-16'
+modules:
+- K
+- R
+- P
+- I
+text: full
+note: 'Кодекс Российской Федерации от 30.12.2001 № 195-ФЗ. Редакция портала: с 03.11.2026, актуальная, есть не вступившие
+  в силу редакции.'
+list_no: 10
