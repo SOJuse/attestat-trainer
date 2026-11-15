@@ -139,6 +139,36 @@ button {
   background: #0d5f9b;
 }
 
+.update {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 40px;
+  background: var(--soft);
+  border-bottom: 1px solid var(--line);
+}
+
+.update__error {
+  color: var(--bad);
+}
+
+.settings__check {
+  margin-top: 12px;
+  min-height: 24px;
+}
+
+.settings__check .update {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .muted {
   color: var(--muted);
 }

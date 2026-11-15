@@ -18,3 +18,29 @@ describe('SettingsView', () => {
     expect(openExternal).toHaveBeenCalledWith('https://github.com/SOJuse/attestat-trainer');
   });
 });
+
+describe('SettingsView: проверка обновлений', () => {
+  it('сообщает, что версия последняя', async () => {
+    render(<SettingsView platform={createFakePlatform()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить обновления' }));
+    expect(await screen.findByText('У вас последняя версия.')).toBeInTheDocument();
+  });
+
+  it('сообщает, если проверить не удалось', async () => {
+    const platform = createFakePlatform({
+      checkAppUpdate: async () => {
+        throw new Error('offline');
+      },
+    });
+    render(<SettingsView platform={platform} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить обновления' }));
+    expect(await screen.findByText(/Не удалось проверить обновления/)).toBeInTheDocument();
+  });
+
+  it('показывает найденную версию', async () => {
+    const platform = createFakePlatform({ checkAppUpdate: async () => ({ version: '0.2.0' }) });
+    render(<SettingsView platform={platform} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить обновления' }));
+    expect(await screen.findByText('Доступна версия 0.2.0')).toBeInTheDocument();
+  });
+});

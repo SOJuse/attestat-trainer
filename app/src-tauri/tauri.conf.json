@@ -35,7 +35,16 @@
     ],
     "macOS": {
       "signingIdentity": "-"
-    }
+    },
+    "createUpdaterArtifacts": true
   },
-  "mainBinaryName": "attestat-trainer"
+  "mainBinaryName": "attestat-trainer",
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERGNEI2ODMyMUYzREE2MUUKUldRZXBqMGZNbWhMMzVvRDB6SG56S2gzelkxanVQT2Jyc0hpcnUrMFE5Z25BWU1YdjhobWNESUIK",
+      "endpoints": [
+        "https://github.com/SOJuse/attestat-trainer/releases/latest/download/latest.json"
+      ]
+    }
+  }
 }
