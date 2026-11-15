@@ -64,6 +64,9 @@ def parse_date(text):
 
 def classify(section, number, title):
     low = (section + " " + title).lower()
+    # постановления и распоряжения Правительства Москвы встречаются и в федеральном разделе списка
+    if number and re.search(r"-(ПП|РП)$", number):
+        return "moscow"
     if "верховного суда" in section.lower():
         return "court"
     if "санитарного врача" in section.lower() or "санпин" in low or "сп 2.4" in low:

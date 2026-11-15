@@ -1,0 +1,65 @@
+name: content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'content/**'
+      - 'tools/**'
+      - 'app/src/core/stem.ts'
+      - '.github/workflows/content.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+        working-directory: app
+      - run: npm ci
+        working-directory: tools
+      - run: npm test
+        working-directory: tools
+      - run: npm run validate
+        working-directory: tools
+      - run: npm run build:library -- --out ../site --build ${{ github.run_number }}
+        working-directory: tools
+      # Пакет подписывается ключом обновлений. Ключ виден только этому шагу.
+      - name: Подписать пакет
+        working-directory: app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: npx tauri signer sign ../site/library.sqlite.gz
+      - run: npm run sign:manifest -- ../site
+        working-directory: tools
+      - name: Убрать служебные файлы
+        run: rm site/library.sqlite.gz.sig && cp README.md site/README.md
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

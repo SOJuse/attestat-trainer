@@ -32,6 +32,7 @@ PAGE = "http://actual.pravo.gov.ru/text.html#hash="
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
 ROOT = pathlib.Path("content/docs")
 ACTUAL_START = "20220701"  # портал ведёт редакции с учётом изменений после этой даты
+TTL = 3
 
 
 def api(path):
@@ -58,7 +59,8 @@ def search(number, date):
     cond = [
         {"AttrId": 6, "AttrMode": 0, "Words": [re.sub(r"^\s*(N|№)\s*", "", number).strip()]},
         {"AttrId": 5, "DateFrom": ymd, "DateTo": ymd},
-        {"AttrId": 999, "AttrMode": 1, "Words": [20, "-date", ACTUAL_START, 0, 1]},
+        # последний ноль: без ограничения по виду акта (с единицей портал ищет только законы и указы)
+        {"AttrId": 999, "AttrMode": 1, "Words": [20, "-date", ACTUAL_START, 0, 0]},
     ]
     found = api("attrsearch/?bpa=ebpi&q=" + q(cond)).get("docs") or []
     want = norm_number(number)
@@ -66,7 +68,9 @@ def search(number, date):
 
 
 def actual_redaction(dochash):
-    reds = api("redactions/?bpa=ebpi&t=" + q({"hash": dochash, "ttl": 4})).get("redactions") or []
+    # ttl=3 — режим «все редакции»: в нём портал отдаёт текст и для актов, у которых
+    # сводная редакция помечена как ознакомительная (постановления, приказы)
+    reds = api("redactions/?bpa=ebpi&t=" + q({"hash": dochash, "ttl": TTL})).get("redactions") or []
     for r in reds:
         if r.get("actual"):
             return r
@@ -190,7 +194,7 @@ def fetch(entry):
         return "no-actual", f"{doc['docpassing']}: нет актуальной редакции ({doc.get('docstate')})"
     if not red.get("hascontent"):
         return "no-text", f"{doc['docpassing']}: у актуальной редакции нет текста"
-    text_html = api(f"redtext?bpa=ebpi&t={red['redid']}&ttl=4").get("redtext") or ""
+    text_html = api(f"redtext?bpa=ebpi&t={red['redid']}&ttl={TTL}").get("redtext") or ""
     markdown, count = to_markdown(text_html)
     if count < 3 or len(markdown) < 2000:
         return "too-short", f"{doc['docpassing']}: разделов {count}, знаков {len(markdown)}"
@@ -210,7 +214,7 @@ def fetch(entry):
         "modules": entry["modules"],
         "text": "full",
         "note": f"{doc['docpassing']}. Редакция портала: {red.get('redcaption', '').strip()}."
-        + ("" if red.get("redofficial") else " Портал помечает текст как ознакомительный."),
+        + ("" if red.get("redofficial") else " Портал помечает эту сводную редакцию как ознакомительную."),
     }
     if entry.get("list_no"):
         meta["list_no"] = entry["list_no"]

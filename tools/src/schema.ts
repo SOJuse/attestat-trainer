@@ -86,6 +86,8 @@ export const Manifest = z
       .object({
         file: z.string(),
         sha256: z.string().regex(/^[0-9a-f]{64}$/),
+        // появляется после подписи пакета; без неё программа пакет не примет
+        signature: z.string().min(1).optional(),
         bytes: z.number().int().positive(),
         docs: z.number().int().nonnegative(),
       })
