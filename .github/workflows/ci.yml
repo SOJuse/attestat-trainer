@@ -43,6 +43,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run validate
+      # разбор текстов портала: только стандартная библиотека Python
+      - run: python3 -m unittest tools/fetch/test_ips_text.py
+        working-directory: .
 
   rust:
     runs-on: ubuntu-latest

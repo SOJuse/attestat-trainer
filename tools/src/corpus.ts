@@ -3,14 +3,17 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 import { DocMeta, Registry, type RegistryEntry } from './schema';
 
-export type Section = { anchor: string; heading: string; text: string; ord: number };
+/** context — названия части, раздела и главы, в которых стоит раздел; пусто, если их нет. */
+export type Section = { anchor: string; heading: string; text: string; ord: number; context: string };
 
 const HEADING = /^## \{#([^}]*)\}\s*(.*)$/;
-const ANCHOR = /^(preambula|(st|p|gl|razdel|pril)-[a-z0-9]+(-[a-z0-9]+)*)$/;
+const ANCHOR = /^((preambula|podpis)(-dup\d+)?|(st|p|gl|razdel|pril)-[a-z0-9]+(-[a-z0-9]+)*)$/;
+const CONTEXT = /^> (.+)$/;
 
 /**
  * Режет text.md на разделы. Раздел начинается строкой `## {#якорь} Заголовок`
- * и продолжается до следующей такой строки.
+ * и продолжается до следующей такой строки. Сразу под заголовком может стоять
+ * строка `> Часть / Раздел / Глава`: это контекст, в текст раздела она не входит.
  */
 export function parseText(md: string): Section[] {
   const sections: Section[] = [];
@@ -19,9 +22,14 @@ export function parseText(md: string): Section[] {
 
   const close = () => {
     if (!current) return;
-    const text = current.lines.join('\n').trim();
+    // первая непустая строка вида «> …» — контекст раздела
+    const lines = [...current.lines];
+    while (lines.length && !lines[0].trim()) lines.shift();
+    const context = lines[0]?.match(CONTEXT)?.[1].trim() ?? '';
+    if (context) lines.shift();
+    const text = lines.join('\n').trim();
     if (!text) throw new Error(`строка ${current.line}: пустой раздел ${current.anchor}`);
-    sections.push({ anchor: current.anchor, heading: current.heading, text, ord: sections.length });
+    sections.push({ anchor: current.anchor, heading: current.heading, text, ord: sections.length, context });
   };
 
   md.split('\n').forEach((raw, i) => {

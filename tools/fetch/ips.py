@@ -16,7 +16,6 @@
 """
 import argparse
 import datetime
-import html
 import json
 import pathlib
 import re
@@ -26,6 +25,8 @@ import time
 import urllib.parse
 
 import yaml
+
+from ips_text import to_markdown
 
 API = "http://actual.pravo.gov.ru:8000/api/ebpi/"
 PAGE = "http://actual.pravo.gov.ru/text.html#hash="
@@ -78,102 +79,6 @@ def actual_redaction(dochash):
     today = datetime.date.today().strftime("%Y%m%d")
     in_force = [r for r in reds if r.get("hascontent") and r.get("reddate", "9") <= today]
     return max(in_force, key=lambda r: r["reddate"]) if in_force else None
-
-
-# ---------- HTML → text.md ----------
-
-TAG = re.compile(r"<[^>]+>")
-PARA = re.compile(r"<p\b([^>]*)>(.*?)</p>", re.S)
-ARTICLE = re.compile(r"^Статья\s+(\d+(?:[.\-]\d+)*)\.?(?:\s|$)")
-POINT = re.compile(r"^(\d{1,3})\.\s+\S")
-ANNEX = re.compile(r"^(ПРИЛОЖЕНИЕ|Приложение|УТВЕРЖД[ЕЁ]Н[АОЫ]?)\b")
-
-
-SUP = re.compile(r"<sup\b[^>]*>\s*([\d\-]+)\s*</sup>", re.I)
-
-
-def clean(fragment):
-    # надстрочный номер («Статья 11¹», «пункт 2¹») в официальных текстах означает 11.1 и 2.1
-    fragment = SUP.sub(r".\1", fragment)
-    text = html.unescape(TAG.sub("", fragment)).replace("\xa0", " ")
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def paragraphs(doc_html):
-    body = doc_html.split("<body", 1)[-1]
-    out = []
-    for attrs, inner in PARA.findall(body):
-        text = clean(inner)
-        if text:
-            is_heading = bool(re.search(r'class="[^"]*\bH\b', attrs))
-            out.append((is_heading, text))
-    return out
-
-
-def anchor_num(num):
-    return re.sub(r"[.\-]+", "-", num).strip("-")
-
-
-def to_sections(paras):
-    """Список (якорь, заголовок, [абзацы]). Режим выбирается по строению документа."""
-    articles = sum(1 for _, t in paras if ARTICLE.match(t))
-    sections, used = [], {}
-
-    def add(anchor, heading):
-        n = used.get(anchor, 0) + 1
-        used[anchor] = n
-        if n > 1:
-            anchor = f"{anchor}-dup{n}"
-        sections.append([anchor, heading, []])
-
-    if articles >= 3:
-        # Названия разделов и глав ждут в `carry` и встают первой строкой следующей статьи.
-        carry = []
-        for is_heading, text in paras:
-            m = ARTICLE.match(text)
-            if m and (is_heading or len(text) < 300):
-                add("st-" + anchor_num(m.group(1)), text)
-                sections[-1][2].extend(carry)
-                carry = []
-            elif is_heading:
-                carry.append(text)
-            else:
-                if not sections:
-                    add("preambula", "Вводная часть")
-                sections[-1][2].extend(carry)
-                carry = []
-                sections[-1][2].append(text)
-        return sections
-
-    annex, last_point = 0, 0
-    add("preambula", "Вводная часть")
-    for is_heading, text in paras:
-        if ANNEX.match(text) and len(text) < 200:
-            annex += 1
-            last_point = 0
-            add(f"pril-{annex}", text)
-            continue
-        m = POINT.match(text)
-        if m and int(m.group(1)) == last_point + 1:
-            last_point += 1
-            prefix = f"pril-{annex}-p-" if annex else "p-"
-            where = f" приложения {annex}" if annex else ""
-            add(prefix + str(last_point), f"Пункт {last_point}{where}")
-        sections[-1][2].append(text)
-    return sections
-
-
-def to_markdown(doc_html):
-    sections = [s for s in to_sections(paragraphs(doc_html)) if s[2]]
-    lines = []
-    for anchor, heading, body in sections:
-        lines.append(f"## {{#{anchor}}} {heading}")
-        lines.append("")
-        for p in body:
-            # строка, начинающаяся с «## {#», была бы принята за заголовок раздела
-            lines.append(p if not p.startswith("## {#") else "\\" + p)
-            lines.append("")
-    return "\n".join(lines), len(sections)
 
 
 # ---------- реестр и запись ----------
