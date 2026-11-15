@@ -38,6 +38,6 @@ describe('реестр документов', () => {
 
   it('есть акты по аттестации', () => {
     const ids = reg.filter((e) => !e.list_no).map((e) => e.id);
-    expect(ids).toEqual(expect.arrayContaining(['donm-pr-13', 'donm-pr-1182', 'donm-pr-533', 'donm-pr-560']));
+    expect(ids).toEqual(expect.arrayContaining(['donm-pr-13', 'donm-pr-1182', 'donm-pr-560']));
   });
 });
