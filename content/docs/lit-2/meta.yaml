@@ -1,0 +1,14 @@
+id: lit-2
+title: Послание Президента Федеральному Собранию
+kind: decree
+date: '2024-02-29'
+edition: '2024-02-29'
+edition_status: original
+source_url: http://www.kremlin.ru/events/president/news/73585
+fetched: '2026-11-16'
+modules:
+- P
+text: full
+note: Стенограмма оглашения Послания 29 февраля 2024 г. с сайта Президента России, без сокращений; разбивка на разделы
+  по темам сделана при сборке корпуса.
+list_no: 2
