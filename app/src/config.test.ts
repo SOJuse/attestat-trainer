@@ -37,3 +37,9 @@ it('релиз публикуется только после всех сбор�
   expect(wf).toMatch(/publish:\s*\n\s*needs: build/);
   expect(wf).toMatch(/gh release edit .* --draft=false/);
 });
+
+it('пакеты базы проверяются тем же ключом, что и обновления программы', () => {
+  const rust = readFileSync('src-tauri/src/library.rs', 'utf8');
+  const m = rust.match(/pub const PACK_PUBKEY: &str = "([^"]+)";/);
+  expect(m?.[1]).toBe(conf.plugins.updater.pubkey);
+});

@@ -2,6 +2,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, type Update } from '@tauri-apps/plugin-updater';
+import { tauriLibrary } from './libraryTauri';
 import type { Platform } from './Platform';
 
 /** Обновление, найденное последней проверкой. Ставится именно оно, без второго запроса. */
@@ -34,4 +35,5 @@ export const tauriPlatform: Platform = {
   },
 
   openExternal: (url) => openUrl(url),
+  library: tauriLibrary,
 };

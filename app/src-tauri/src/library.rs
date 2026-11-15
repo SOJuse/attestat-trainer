@@ -14,6 +14,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 const SCHEMA_VERSION: i64 = 1;
+
+/// Публичный ключ, которым подписаны пакеты базы. Тот же, что у обновлений программы
+/// (`plugins.updater.pubkey` в tauri.conf.json); совпадение проверяет тест конфигурации.
+pub const PACK_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERGNEI2ODMyMUYzREE2MUUKUldRZXBqMGZNbWhMMzVvRDB6SG56S2gzelkxanVQT2Jyc0hpcnUrMFE5Z25BWU1YdjhobWNESUIK";
 const DB_FILE: &str = "library.sqlite";
 const INFO_FILE: &str = "library.json";
 const SNIPPET_CHARS: usize = 240;
@@ -25,6 +29,7 @@ const MAX_LIMIT: u32 = 100;
 pub enum LibError {
     NotInstalled,
     Checksum,
+    Signature,
     BadPack,
     Query,
     Io,
@@ -35,6 +40,7 @@ impl LibError {
         match self {
             LibError::NotInstalled => "not-installed",
             LibError::Checksum => "checksum",
+            LibError::Signature => "signature",
             LibError::BadPack => "bad-pack",
             LibError::Query => "query",
             LibError::Io => "io",
@@ -151,8 +157,29 @@ pub fn status(dir: &Path) -> Status {
     Status { installed: docs > 0, pack_version: if docs > 0 { pack_version } else { None }, docs }
 }
 
+/// Проверяет подпись пакета. Ключ и подпись — в том виде, в каком их выдаёт `tauri signer`:
+/// base64 от текста файла minisign.
+fn verify_signature(gz: &[u8], signature: &str, pubkey: &str) -> Res<()> {
+    use base64::Engine;
+    let decode = |text: &str| {
+        base64::engine::general_purpose::STANDARD
+            .decode(text.trim())
+            .ok()
+            .and_then(|bytes| String::from_utf8(bytes).ok())
+            .ok_or(LibError::Signature)
+    };
+    let key = minisign_verify::PublicKey::decode(&decode(pubkey)?).map_err(|_| LibError::Signature)?;
+    let sig = minisign_verify::Signature::decode(&decode(signature)?).map_err(|_| LibError::Signature)?;
+    key.verify(gz, &sig, true).map_err(|_| LibError::Signature)
+}
+
 /// Ставит пакет из сжатых байтов. При любой ошибке прежняя библиотека остаётся как была.
-pub fn install(dir: &Path, gz: &[u8], sha256: &str, pack_version: &str) -> Res<()> {
+///
+/// Подлинность пакета подтверждает подпись: её нельзя подделать без закрытого ключа,
+/// поэтому не важно, кто передал байты. SHA-256 из манифеста — дополнительная проверка,
+/// что файл скачан целиком.
+pub fn install(dir: &Path, gz: &[u8], sha256: &str, signature: &str, pubkey: &str, pack_version: &str) -> Res<()> {
+    verify_signature(gz, signature, pubkey)?;
     let actual = sha256_hex(gz);
     if !actual.eq_ignore_ascii_case(sha256.trim()) {
         return Err(LibError::Checksum);
@@ -318,10 +345,13 @@ mod tests {
 
     const PACK: &[u8] = include_bytes!("../tests/fixtures/library.sqlite.gz");
     const PACK_SHA: &str = "e1864c4b213fce25fcb41c8d78fad8018c95bbc811bd95f26cdbce5a22a2bead";
+    // подпись тестового пакета тестовым ключом; закрытой части ключа в репозитории нет
+    const PACK_SIG: &str = include_str!("../tests/fixtures/library.sqlite.gz.sig");
+    const TEST_KEY: &str = include_str!("../tests/fixtures/test-key.pub");
 
     fn installed() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
-        install(dir.path(), PACK, PACK_SHA, "2026.11.20.1").unwrap();
+        install(dir.path(), PACK, PACK_SHA, PACK_SIG, TEST_KEY, "2026.11.20.1").unwrap();
         dir
     }
 
@@ -347,40 +377,62 @@ mod tests {
         let dir = installed();
         let before = fs::read(dir.path().join(DB_FILE)).unwrap();
         let bad_sha = "0".repeat(64);
-        assert_eq!(install(dir.path(), PACK, &bad_sha, "2026.12.01.1"), Err(LibError::Checksum));
+        assert_eq!(install(dir.path(), PACK, &bad_sha, PACK_SIG, TEST_KEY, "2026.12.01.1"), Err(LibError::Checksum));
         assert_eq!(fs::read(dir.path().join(DB_FILE)).unwrap(), before);
         assert_eq!(status(dir.path()).pack_version.as_deref(), Some("2026.11.20.1"));
     }
 
     #[test]
-    fn garbage_with_matching_checksum_is_rejected_and_cleaned_up() {
+    fn pack_not_signed_by_our_key_is_rejected() {
         let dir = installed();
         let before = fs::read(dir.path().join(DB_FILE)).unwrap();
-        let garbage = b"this is not gzip";
-        let sha = sha256_hex(garbage);
-        assert_eq!(install(dir.path(), garbage, &sha, "2026.12.01.1"), Err(LibError::BadPack));
+        // чужие байты с верным для них хешем, но с подписью от другого файла
+        let forged = b"this is not our pack";
+        let sha = sha256_hex(forged);
+        assert_eq!(
+            install(dir.path(), forged, &sha, PACK_SIG, TEST_KEY, "2026.12.01.1"),
+            Err(LibError::Signature)
+        );
         assert_eq!(fs::read(dir.path().join(DB_FILE)).unwrap(), before);
         assert!(!dir.path().join("library.sqlite.new").exists());
+    }
+
+    #[test]
+    fn pack_signed_by_another_key_is_rejected() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            install(dir.path(), PACK, PACK_SHA, PACK_SIG, PACK_PUBKEY, "2026.12.01.1"),
+            Err(LibError::Signature)
+        );
+        assert!(!status(dir.path()).installed);
+    }
+
+    #[test]
+    fn malformed_signature_or_key_is_rejected() {
+        let dir = tempfile::tempdir().unwrap();
+        for (sig, key) in [("", TEST_KEY), ("не base64 !!!", TEST_KEY), (PACK_SIG, ""), (PACK_SIG, "abc")] {
+            assert_eq!(install(dir.path(), PACK, PACK_SHA, sig, key, "2026.12.01.1"), Err(LibError::Signature));
+        }
     }
 
     #[test]
     fn pack_with_newer_schema_is_rejected() {
         let dir = tempfile::tempdir().unwrap();
         let raw = dir.path().join("v2.sqlite");
-        {
-            let mut plain = Vec::new();
-            flate2::read::GzDecoder::new(PACK).read_to_end(&mut plain).unwrap();
-            fs::write(&raw, plain).unwrap();
-            let conn = Connection::open(&raw).unwrap();
-            conn.pragma_update(None, "user_version", 2).unwrap();
-        }
-        let mut enc = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
-        std::io::Write::write_all(&mut enc, &fs::read(&raw).unwrap()).unwrap();
-        let gz = enc.finish().unwrap();
-        let sha = sha256_hex(&gz);
-        let target = tempfile::tempdir().unwrap();
-        assert_eq!(install(target.path(), &gz, &sha, "2027.01.01.1"), Err(LibError::BadPack));
-        assert!(!status(target.path()).installed);
+        let mut plain = Vec::new();
+        flate2::read::GzDecoder::new(PACK).read_to_end(&mut plain).unwrap();
+        fs::write(&raw, plain).unwrap();
+        assert_eq!(check_pack(&raw), Ok(3));
+        Connection::open(&raw).unwrap().pragma_update(None, "user_version", 2).unwrap();
+        assert_eq!(check_pack(&raw), Err(LibError::BadPack));
+    }
+
+    #[test]
+    fn file_that_is_not_a_database_is_rejected() {
+        let dir = tempfile::tempdir().unwrap();
+        let raw = dir.path().join("junk.sqlite");
+        fs::write(&raw, b"not a database").unwrap();
+        assert_eq!(check_pack(&raw), Err(LibError::BadPack));
     }
 
     #[test]
@@ -457,7 +509,7 @@ pub mod commands {
         Ok(status(&data_dir(&app)?))
     }
 
-    /// Тело запроса — сжатый пакет, хеш и версия приходят в заголовках.
+    /// Тело запроса — сжатый пакет; хеш, подпись и версия приходят в заголовках.
     #[tauri::command(async)]
     pub fn library_install(app: AppHandle, request: Request<'_>) -> Result<(), String> {
         let InvokeBody::Raw(bytes) = request.body() else {
@@ -471,7 +523,14 @@ pub mod commands {
                 .map(String::from)
                 .ok_or_else(|| LibError::BadPack.code().to_string())
         };
-        code(install(&data_dir(&app)?, bytes, &header("x-sha256")?, &header("x-pack-version")?))
+        code(install(
+            &data_dir(&app)?,
+            bytes,
+            &header("x-sha256")?,
+            &header("x-signature")?,
+            PACK_PUBKEY,
+            &header("x-pack-version")?,
+        ))
     }
 
     #[tauri::command(async)]

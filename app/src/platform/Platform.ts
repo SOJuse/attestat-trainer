@@ -1,3 +1,5 @@
+import type { LibraryStore } from './Library';
+
 export type AppUpdate = { version: string; notes?: string };
 
 /** Всё, что интерфейсу нужно от системы. Компоненты не обращаются к Tauri напрямую. */
@@ -8,4 +10,5 @@ export interface Platform {
   /** Скачивает и ставит обновление, после успеха перезапускает программу. */
   installAppUpdate(onProgress?: (fraction: number) => void): Promise<void>;
   openExternal(url: string): Promise<void>;
+  library: LibraryStore;
 }

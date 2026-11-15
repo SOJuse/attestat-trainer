@@ -1,3 +1,4 @@
+import { browserLibrary } from './libraryBrowser';
 import type { Platform } from './Platform';
 
 /** Запуск в обычном браузере: для разработки и автотестов интерфейса. */
@@ -8,4 +9,5 @@ export const browserPlatform: Platform = {
   openExternal: async (url) => {
     window.open(url, '_blank', 'noopener');
   },
+  library: browserLibrary,
 };
