@@ -1,6 +1,6 @@
 [package]
 name = "attestat-trainer"
-version = "0.1.2"
+version = "0.2.0"
 description = "Тренажёр для подготовки к аттестационному тестированию руководителей школ"
 authors = ["SOJuse"]
 edition = "2024"

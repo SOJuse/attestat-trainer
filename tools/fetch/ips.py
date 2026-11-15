@@ -89,7 +89,12 @@ POINT = re.compile(r"^(\d{1,3})\.\s+\S")
 ANNEX = re.compile(r"^(ПРИЛОЖЕНИЕ|Приложение|УТВЕРЖД[ЕЁ]Н[АОЫ]?)\b")
 
 
+SUP = re.compile(r"<sup\b[^>]*>\s*([\d\-]+)\s*</sup>", re.I)
+
+
 def clean(fragment):
+    # надстрочный номер («Статья 11¹», «пункт 2¹») в официальных текстах означает 11.1 и 2.1
+    fragment = SUP.sub(r".\1", fragment)
     text = html.unescape(TAG.sub("", fragment)).replace("\xa0", " ")
     return re.sub(r"\s+", " ", text).strip()
 
@@ -242,6 +247,7 @@ def main():
     a.add_argument("--only", default="")
     a.add_argument("--limit", type=int, default=0)
     a.add_argument("--report", default="")
+    a.add_argument("--force", action="store_true", help="перекачать уже собранные документы")
     args = ap.parse_args()
 
     if args.cmd == "search":
@@ -263,8 +269,10 @@ def main():
     for entry in entries:
         if kinds and entry["kind"] not in kinds:
             continue
-        if (ROOT / entry["id"] / "meta.yaml").exists():
+        if (ROOT / entry["id"] / "meta.yaml").exists() and not args.force:
             continue
+        if args.force and not (ROOT / entry["id"] / "meta.yaml").exists():
+            continue  # --force перекачивает только то, что уже есть
         if args.limit and done >= args.limit:
             break
         try:
