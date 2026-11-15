@@ -73,6 +73,10 @@ export const DocMeta = z
     modules: z.array(ModuleCode),
     list_no: z.number().int().positive().optional(),
     text: z.enum(['full', 'missing', 'bibliographic']),
+    // current — действующая сводная редакция; original — текст официальной публикации,
+    // более поздние изменения в него не внесены (их перечисляет amended_by)
+    edition_status: z.enum(['current', 'original']).optional(),
+    amended_by: z.array(z.string()).optional(),
     note: z.string().optional(),
   })
   .strict();

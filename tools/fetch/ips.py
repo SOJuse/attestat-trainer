@@ -36,14 +36,22 @@ ACTUAL_START = ""  # без нижней границы: с датой порт�
 TTL = 3
 
 
-def api(path):
-    time.sleep(1)
-    out = subprocess.run(
-        ["curl", "-sS", "--fail", "-m", "180", "-A", UA, API + path], capture_output=True, text=True
-    )
-    if out.returncode != 0:
-        raise RuntimeError(f"портал не ответил: {out.stderr.strip()[:200]}")
-    return json.loads(out.stdout)
+def api(path, attempts=4):
+    """Запрос к порталу. Портал иногда обрывает соединение: тогда ждём и пробуем снова."""
+    last = ""
+    for attempt in range(attempts):
+        time.sleep(1 if attempt == 0 else 15 * attempt)
+        out = subprocess.run(
+            ["curl", "-sS", "--fail", "-m", "180", "-A", UA, API + path], capture_output=True, text=True
+        )
+        if out.returncode == 0:
+            try:
+                return json.loads(out.stdout)
+            except json.JSONDecodeError:
+                last = "ответ не похож на JSON"
+                continue
+        last = out.stderr.strip()[:200]
+    raise RuntimeError(f"портал не ответил: {last}")
 
 
 def q(obj):
@@ -153,6 +161,7 @@ def main():
     a.add_argument("--limit", type=int, default=0)
     a.add_argument("--report", default="")
     a.add_argument("--force", action="store_true", help="перекачать уже собранные документы")
+    a.add_argument("--ids", default="", help="только эти документы, через запятую")
     args = ap.parse_args()
 
     if args.cmd == "search":
@@ -170,9 +179,12 @@ def main():
         return 0
 
     kinds = set(filter(None, args.only.split(",")))
+    only_ids = set(filter(None, args.ids.split(",")))
     results, done = [], 0
     for entry in entries:
         if kinds and entry["kind"] not in kinds:
+            continue
+        if only_ids and entry["id"] not in only_ids:
             continue
         if (ROOT / entry["id"] / "meta.yaml").exists() and not args.force:
             continue

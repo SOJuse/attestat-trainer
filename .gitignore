@@ -5,3 +5,4 @@ __pycache__/
 # скан на 27 МБ: в git не кладём, адрес и SHA-256 есть в SOURCES.md
 content/sources/site/06.07.2026_Пр-533.pdf
 dist-pack
+tools/fetch/certs/
