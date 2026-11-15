@@ -121,7 +121,8 @@ describe('LibraryView: список и поиск', () => {
   it('показывает документы и фильтрует по модулю', async () => {
     render(<LibraryView library={library()} openExternal={async () => {}} />);
     const list = await screen.findByRole('list', { name: 'Документы' });
-    expect(within(list).getAllByRole('button')).toHaveLength(3);
+    // список появляется пустым и заполняется, когда придёт ответ библиотеки
+    expect(await within(list).findAllByRole('button')).toHaveLength(3);
     await userEvent.click(screen.getByRole('button', { name: 'Процессы' }));
     expect(within(list).getAllByRole('button').map((b) => b.textContent)).toEqual([
       expect.stringContaining('Об образовании'),
