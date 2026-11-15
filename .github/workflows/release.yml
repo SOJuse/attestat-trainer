@@ -1,0 +1,80 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            args: --target aarch64-apple-darwin
+          - runner: macos-latest
+            args: --target x86_64-apple-darwin
+          - runner: windows-latest
+            args: ''
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Версия в конфиге совпадает с тегом
+        shell: bash
+        run: |
+          conf=$(node -p "require('./app/src-tauri/tauri.conf.json').version")
+          if [ "v$conf" != "$GITHUB_REF_NAME" ]; then
+            echo "tauri.conf.json: $conf, тег: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.runner == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - run: npm ci
+        working-directory: app
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: app
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Аттестация 1103 ${{ github.ref_name }}'
+          releaseBody: |
+            Как установить и что делать при первом запуске, написано в README: https://github.com/SOJuse/attestat-trainer#readme
+
+            Сборку для Windows делает GitHub, на настоящем компьютере с Windows её пока никто не запускал.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+
+  # Релиз остаётся черновиком, пока не собраны все три платформы:
+  # иначе «последним» на время становится релиз без части файлов.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
