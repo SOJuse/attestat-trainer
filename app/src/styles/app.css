@@ -150,7 +150,7 @@ button {
 }
 
 .update__error {
-  color: var(--bad);
+  color: var(--bad-text);
 }
 
 .settings__check {

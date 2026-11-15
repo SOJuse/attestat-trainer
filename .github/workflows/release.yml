@@ -22,6 +22,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Версия в конфиге совпадает с тегом
         shell: bash
@@ -62,7 +64,17 @@ jobs:
             Как установить и что делать при первом запуске, написано в README: https://github.com/SOJuse/attestat-trainer#readme
 
             Сборку для Windows делает GitHub, на настоящем компьютере с Windows её пока никто не запускал.
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+  # Релиз остаётся черновиком, пока не собраны все три платформы:
+  # иначе «последним» на время становится релиз без части файлов.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

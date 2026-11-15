@@ -31,3 +31,5 @@ src-tauri/icons/ios
 /public
 /src/App.css
 /src/assets/react.svg
+
+*.tsbuildinfo

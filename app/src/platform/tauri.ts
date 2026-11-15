@@ -1,20 +1,23 @@
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { check } from '@tauri-apps/plugin-updater';
+import { check, type Update } from '@tauri-apps/plugin-updater';
 import type { Platform } from './Platform';
+
+/** Обновление, найденное последней проверкой. Ставится именно оно, без второго запроса. */
+let found: Update | null = null;
 
 export const tauriPlatform: Platform = {
   appVersion: () => getVersion(),
 
   checkAppUpdate: async () => {
-    const update = await check();
-    return update ? { version: update.version, notes: update.body } : null;
+    found = await check();
+    return found ? { version: found.version, notes: found.body } : null;
   },
 
   installAppUpdate: async (onProgress) => {
-    const update = await check();
-    if (!update) return;
+    const update = found ?? (await check());
+    if (!update) throw new Error('обновление недоступно');
     let total = 0;
     let received = 0;
     await update.downloadAndInstall((event) => {
