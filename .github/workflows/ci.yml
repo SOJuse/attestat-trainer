@@ -37,6 +37,29 @@ jobs:
           cache: npm
           cache-dependency-path: tools/package-lock.json
       - run: npm ci
+      # сборка пакета берёт стемминг из app/src/core
+      - run: npm ci
+        working-directory: app
       - run: npm run typecheck
       - run: npm test
       - run: npm run validate
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+      # сборке Rust-части нужен готовый фронтенд в app/dist
+      - run: npm ci && npm run build
+        working-directory: app
+      - run: cargo test
+        working-directory: app/src-tauri
