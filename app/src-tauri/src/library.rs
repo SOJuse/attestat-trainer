@@ -89,6 +89,8 @@ pub struct SectionBody {
     pub heading: String,
     pub ord: u32,
     pub text: String,
+    /// Часть, раздел и глава, в которых стоит раздел; пусто, если их нет.
+    pub context: String,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -251,13 +253,19 @@ pub fn sections(dir: &Path, doc_id: &str, from_ord: u32, count: u32) -> Res<Vec<
     let conn = open(dir)?;
     let mut stmt = conn
         .prepare(
-            "SELECT anchor, heading, ord, text FROM sections
+            "SELECT anchor, heading, ord, text, context FROM sections
              WHERE doc_id = ?1 AND ord >= ?2 ORDER BY ord LIMIT ?3",
         )
         .map_err(|_| LibError::BadPack)?;
     let rows = stmt
         .query_map(rusqlite::params![doc_id, from_ord, count.min(MAX_LIMIT)], |r| {
-            Ok(SectionBody { anchor: r.get(0)?, heading: r.get(1)?, ord: r.get(2)?, text: r.get(3)? })
+            Ok(SectionBody {
+                anchor: r.get(0)?,
+                heading: r.get(1)?,
+                ord: r.get(2)?,
+                text: r.get(3)?,
+                context: r.get(4)?,
+            })
         })
         .map_err(|_| LibError::BadPack)?;
     rows.collect::<Result<_, _>>().map_err(|_| LibError::BadPack)
@@ -344,7 +352,7 @@ mod tests {
     use super::*;
 
     const PACK: &[u8] = include_bytes!("../tests/fixtures/library.sqlite.gz");
-    const PACK_SHA: &str = "e1864c4b213fce25fcb41c8d78fad8018c95bbc811bd95f26cdbce5a22a2bead";
+    const PACK_SHA: &str = "8fe6d3ce614fcf2fd954c58046c0b5b533b1433eb94ae7e0d88493fe08a4cdd1";
     // подпись тестового пакета тестовым ключом; закрытой части ключа в репозитории нет
     const PACK_SIG: &str = include_str!("../tests/fixtures/library.sqlite.gz.sig");
     const TEST_KEY: &str = include_str!("../tests/fixtures/test-key.pub");
@@ -460,6 +468,8 @@ mod tests {
         let ords: Vec<u32> = page.iter().map(|s| s.ord).collect();
         assert_eq!(ords, [1, 2]);
         assert!(page[0].text.starts_with("По заявлению женщины"));
+        assert_eq!(page[0].context, "ЧАСТЬ ЧЕТВЕРТАЯ / Глава 41. ОСОБЕННОСТИ РЕГУЛИРОВАНИЯ ТРУДА ЖЕНЩИН");
+        assert_eq!(page[1].context, "");
     }
 
     #[test]

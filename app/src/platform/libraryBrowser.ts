@@ -33,7 +33,7 @@ export const browserLibrary: LibraryStore = {
 
   sections: async (docId, fromOrd, count) =>
     find(docId)
-      .sections.map((s, ord) => ({ ...s, ord }))
+      .sections.map((s, ord) => ({ ...s, ord, context: '' }))
       .slice(fromOrd, fromOrd + count),
 
   search: async (query, limit = 50) => {

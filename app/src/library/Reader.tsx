@@ -136,8 +136,11 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
           Показать предыдущие
         </button>
       )}
-      {sections.map((s) => (
+      {sections.map((s, i) => (
         <article key={s.anchor} className="section">
+          {s.context && s.context !== sections[i - 1]?.context && (
+            <p className="section__context">{s.context}</p>
+          )}
           <h2>{s.heading}</h2>
           {s.text.split(/\n{2,}/).map((paragraph, i) => (
             <p key={i}>{paragraph}</p>

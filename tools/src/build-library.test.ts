@@ -58,6 +58,17 @@ describe('buildLibrary', () => {
     ]);
   });
 
+  it('контекст раздела хранится отдельно и в поиск не попадает', () => {
+    const rows = db.prepare("SELECT anchor, context FROM sections WHERE doc_id = 'tk-rf' ORDER BY ord").all();
+    expect(rows).toEqual([
+      { anchor: 'st-255', context: '' },
+      { anchor: 'st-256', context: 'ЧАСТЬ ЧЕТВЕРТАЯ / Глава 41. ОСОБЕННОСТИ РЕГУЛИРОВАНИЯ ТРУДА ЖЕНЩИН' },
+      { anchor: 'st-257', context: '' },
+    ]);
+    const hits = db.prepare('SELECT rowid FROM sections_fts WHERE sections_fts MATCH ?').all('"особен"*');
+    expect(hits).toEqual([]);
+  });
+
   it('манифест описывает именно этот файл', () => {
     const gz = readFileSync(join(out, 'library.sqlite.gz'));
     expect(manifest.schemaVersion).toBe(1);

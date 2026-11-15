@@ -33,6 +33,8 @@ const body = (ord: number): SectionBody => ({
   heading: `Статья ${ord + 1}. Заголовок`,
   ord,
   text: `Текст статьи ${ord + 1}.`,
+  // первые две статьи в главе 1, дальше глава 2
+  context: ord < 2 ? 'Глава 1. Общие положения' : 'Глава 2. Трудовые отношения',
 });
 
 function library(over: Partial<LibraryStore> = {}, total = 3): LibraryStore {
@@ -172,6 +174,23 @@ describe('LibraryView: чтение', () => {
     expect(screen.queryByText('Текст статьи 31.')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Показать дальше' }));
     expect(await screen.findByText('Текст статьи 60.')).toBeInTheDocument();
+  });
+
+  it('название главы показывает один раз, над первой её статьёй', async () => {
+    render(<LibraryView library={library({}, 4)} openExternal={async () => {}} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Трудовой кодекс/ }));
+    await screen.findByText('Текст статьи 4.');
+    expect(screen.getAllByText('Глава 1. Общие положения')).toHaveLength(1);
+    expect(screen.getAllByText('Глава 2. Трудовые отношения')).toHaveLength(1);
+    const order = [...document.querySelectorAll('.section__context, .section h2')].map((e) => e.textContent);
+    expect(order).toEqual([
+      'Глава 1. Общие положения',
+      'Статья 1. Заголовок',
+      'Статья 2. Заголовок',
+      'Глава 2. Трудовые отношения',
+      'Статья 3. Заголовок',
+      'Статья 4. Заголовок',
+    ]);
   });
 
   it('показывает редакцию и открывает источник', async () => {

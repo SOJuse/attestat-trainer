@@ -35,7 +35,8 @@ export type DocInfo = {
 };
 
 export type SectionHead = { anchor: string; heading: string; ord: number };
-export type SectionBody = SectionHead & { text: string };
+/** context — часть, раздел и глава, в которых стоит раздел; пустая строка, если их нет. */
+export type SectionBody = SectionHead & { text: string; context: string };
 export type SearchHit = {
   docId: string;
   docTitle: string;

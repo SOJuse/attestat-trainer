@@ -18,6 +18,7 @@ CREATE TABLE docs (
 CREATE TABLE sections (
   rowid INTEGER PRIMARY KEY, doc_id TEXT NOT NULL REFERENCES docs(id),
   anchor TEXT NOT NULL, heading TEXT NOT NULL, ord INTEGER NOT NULL, text TEXT NOT NULL,
+  context TEXT NOT NULL DEFAULT '',
   UNIQUE (doc_id, anchor)
 );
 CREATE VIRTUAL TABLE sections_fts USING fts5(heading, text, content='', tokenize='unicode61');
@@ -44,7 +45,7 @@ export function buildLibrary({ root, out, build, date = new Date() }: BuildOptio
        @fetched, @modules, @text_status, @note, @list_no)`,
   );
   const insertSection = db.prepare(
-    'INSERT INTO sections (rowid, doc_id, anchor, heading, ord, text) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO sections (rowid, doc_id, anchor, heading, ord, text, context) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
   const insertFts = db.prepare('INSERT INTO sections_fts (rowid, heading, text) VALUES (?, ?, ?)');
 
@@ -71,7 +72,7 @@ export function buildLibrary({ root, out, build, date = new Date() }: BuildOptio
       });
       for (const s of doc?.sections ?? []) {
         rowid += 1;
-        insertSection.run(rowid, entry.id, s.anchor, s.heading, s.ord, s.text);
+        insertSection.run(rowid, entry.id, s.anchor, s.heading, s.ord, s.text, s.context);
         insertFts.run(rowid, stemText(s.heading), stemText(s.text));
       }
     }
