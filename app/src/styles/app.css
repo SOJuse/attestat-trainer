@@ -109,6 +109,36 @@ button {
   margin: 0 0 12px;
 }
 
+.view h2 {
+  margin: 28px 0 8px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+}
+
+.button {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.button:hover {
+  background: var(--softer);
+  border-color: var(--accent);
+}
+
+.button--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.button--primary:hover {
+  background: #0d5f9b;
+}
+
 .muted {
   color: var(--muted);
 }
