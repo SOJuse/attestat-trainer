@@ -150,6 +150,8 @@ const Envelope = z.object({
   /** пробная база: мини-тесты открыты на тех заданиях, что есть; экзамен и прогноз закрыты */
   pilot: z.boolean(),
   modules: z.object({ K: ModuleInfo, R: ModuleInfo, P: ModuleInfo, Rez: ModuleInfo, I: ModuleInfo }).strict(),
+  /** документы, на которые ссылаются задания: подпись под цитатой не зависит от того, скачана ли библиотека */
+  docs: z.record(z.string(), z.object({ title: text, ocr: z.boolean() }).strict()).default({}),
   tasks: z.array(z.unknown()),
   cases: z.array(z.unknown()),
   cards: z.array(z.unknown()),

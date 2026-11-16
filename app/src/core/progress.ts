@@ -25,7 +25,9 @@ const Attempt = z
     day: isoDate,
     correct: z.boolean(),
     mode: Mode,
-    /** первый ли это ответ на задание в его текущей ревизии; прогноз считается по первым ответам */
+    /** ревизия задания, на которую дан ответ */
+    revision: z.number().int().positive(),
+    /** первый ли это ответ на задание в этой ревизии; прогноз считается по первым ответам */
     first: z.boolean(),
   })
   .strict();
@@ -71,7 +73,8 @@ const Shape = z
     attempts: z.array(Attempt),
     exams: z.array(ExamRecord),
     settings: z.object({ dailySize: z.number().int().min(5).max(50) }).strict(),
-    draft: Draft.optional(),
+    /** незаконченные сессия и тест живут отдельно: начать одно не значит потерять другое */
+    drafts: z.object({ daily: Draft.optional(), exam: Draft.optional() }).strict(),
   })
   .strict();
 
@@ -88,7 +91,7 @@ export class UserDataError extends Error {
 }
 
 export function emptyUserData(): UserData {
-  return { schema: USER_DATA_SCHEMA, items: {}, attempts: [], exams: [], settings: { dailySize: 20 } };
+  return { schema: USER_DATA_SCHEMA, items: {}, attempts: [], exams: [], settings: { dailySize: 20 }, drafts: {} };
 }
 
 export function parseUserData(raw: unknown): UserData {
@@ -112,7 +115,7 @@ export function applyAnswer(data: UserData, { id, revision, correct, mode, now }
   const today = localDate(now);
   const prev = data.items[id];
   const sameRevision = prev?.revision === revision;
-  const first = !data.attempts.some((a) => a.id === id) || !sameRevision;
+  const first = !data.attempts.some((a) => a.id === id && a.revision === revision);
   const prevSrs = sameRevision ? prev?.srs : undefined;
   const srs: Srs | undefined = mode === 'exam' && correct ? prevSrs : reviewed(prevSrs, correct, today);
 
@@ -123,8 +126,30 @@ export function applyAnswer(data: UserData, { id, revision, correct, mode, now }
   return {
     ...data,
     items: { ...data.items, [id]: item },
-    attempts: [...data.attempts, { id, at: now.toISOString(), day: today, correct, mode, first }],
+    attempts: [...data.attempts, { id, at: now.toISOString(), day: today, correct, mode, revision, first }],
   };
+}
+
+export type DraftSlot = 'daily' | 'exam';
+
+/** Есть ли незаконченная сессия или тест. Пока они есть, базу заданий не меняют. */
+export function hasDraft(data: UserData): boolean {
+  return Boolean(data.drafts.daily || data.drafts.exam);
+}
+
+/**
+ * Черновик под новую базу: задания, которых в базе больше нет, выпадают вместе со своими ответами.
+ * Если не осталось ничего, черновика нет.
+ */
+function fitDraft(draft: Draft, known: Set<string>): Draft | undefined {
+  if (draft.ids.every((id) => known.has(id))) return draft;
+  const keep = draft.ids.map((id) => known.has(id));
+  const ids = draft.ids.filter((_, i) => keep[i]);
+  if (ids.length === 0) return undefined;
+  // у теста ответы стоят по номерам заданий; у сессии это просто список результатов
+  const answers = draft.kind === 'daily' ? draft.answers : draft.answers.filter((_, i) => keep[i]);
+  const position = keep.slice(0, draft.position).filter(Boolean).length;
+  return { ...draft, ids, answers, position };
 }
 
 /**
@@ -139,6 +164,15 @@ export function reconcile(data: UserData, pack: TasksPack): UserData {
   for (const c of pack.cards) revisions.set(c.id, c.revision);
 
   let changed = false;
+  const known = new Set(pack.tasks.map((t) => t.id));
+  const drafts: UserData['drafts'] = {};
+  for (const slot of ['daily', 'exam'] as const) {
+    const draft = data.drafts[slot];
+    if (!draft) continue;
+    const fitted = fitDraft(draft, known);
+    if (fitted) drafts[slot] = fitted;
+    if (fitted !== draft) changed = true;
+  }
   const items = { ...data.items };
   for (const [id, item] of Object.entries(data.items)) {
     const revision = revisions.get(id);
@@ -147,7 +181,7 @@ export function reconcile(data: UserData, pack: TasksPack): UserData {
       changed = true;
     }
   }
-  return changed ? { ...data, items } : data;
+  return changed ? { ...data, items, drafts } : data;
 }
 
 export function setHidden(data: UserData, id: string, hidden: boolean): UserData {

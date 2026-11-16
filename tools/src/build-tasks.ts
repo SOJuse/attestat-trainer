@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MODULE_CODES, TASKS_SCHEMA } from '../../app/src/core/taskSchema';
-import { loadTopics } from './corpus';
+import { loadDoc, loadTopics } from './corpus';
 import { Manifest } from './schema';
 import { loadTasks, type Raw } from './tasks';
 import { validateTasks } from './validate-tasks';
@@ -30,6 +30,19 @@ export function buildTasks({ root, out, build, date = new Date(), pilot, packVer
   const { tasks, cases, cards } = loadTasks(root);
   const topics = loadTopics(root);
   const pad = (n: number) => String(n).padStart(2, '0');
+
+  // подписи к цитатам: короткое название документа и признак «распознан со скана»
+  const refsOf = (item: Raw): { doc: string }[] => [
+    ...((item.refs as { doc: string }[] | undefined) ?? []),
+    ...((item.steps as Raw[] | undefined) ?? []).flatMap((s) => (s.refs as { doc: string }[] | undefined) ?? []),
+  ];
+  const docIds = [...new Set([...tasks, ...cases, ...cards].flatMap(refsOf).map((r) => r.doc))].sort();
+  const docs = Object.fromEntries(
+    docIds.flatMap((id) => {
+      const meta = loadDoc(root, id)?.meta;
+      return meta ? [[id, { title: meta.short ?? meta.title, ocr: meta.text === 'ocr' }]] : [];
+    }),
+  );
   const pack = {
     schemaVersion: TASKS_SCHEMA,
     packVersion: packVersion ?? `${date.getUTCFullYear()}.${pad(date.getUTCMonth() + 1)}.${pad(date.getUTCDate())}.${build}`,
@@ -40,6 +53,7 @@ export function buildTasks({ root, out, build, date = new Date(), pilot, packVer
         return [m, { title: info.title, ready: info.ready, topics: info.topics.map((t) => ({ id: t.id, title: t.title })) }];
       }),
     ),
+    docs,
     tasks: [...tasks].sort(byId).map((t) => without(t, ['file'])),
     cases: [...cases].sort(byId).map((c) => without(c, ['file'])),
     cards: [...cards].sort(byId).map((c) => without(c, ['file'])),

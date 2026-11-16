@@ -67,6 +67,9 @@ describe('buildTasks', () => {
     expect([pack.tasks.length, pack.cases.length, pack.cards.length]).toEqual([3, 1, 1]);
     expect(pack.modules.K.topics).toEqual([{ id: 'otpuska', title: 'Отпуска' }]);
     expect(info.count).toBe(3);
+    // у каждой ссылки есть подпись, которая не зависит от библиотеки
+    const used = new Set(pack.tasks.flatMap((t) => t.refs.map((r) => r.doc)));
+    for (const id of used) expect(pack.docs[id]?.title).toBeTruthy();
     expect(info.file).toBe('tasks.json');
     expect(info.bytes).toBe(Buffer.byteLength(raw));
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyAnswer, emptyUserData, setHidden, type UserData } from './progress';
+import { applyAnswer, emptyUserData, reconcile, setHidden, type UserData } from './progress';
 import { dailySession, trainingSet } from './session';
 import { makePack, seeded } from './testPack';
 
@@ -100,5 +100,23 @@ describe('trainingSet', () => {
     d = answer(d, 'K-b-002', true, '2026-11-10');
     d = answer(d, 'K-b-002', false, '2026-11-11'); // ошибся позже
     expect(trainingSet({ pack, data: d, filter: { onlyErrors: true } })).toEqual(['K-b-002']);
+  });
+});
+
+describe('что считается новым заданием', () => {
+  const pack = makePack(1); // 5 заданий
+  const id = pack.tasks[0].id;
+
+  it('верно решённое только на экзамене остаётся новым и приходит в сессию', () => {
+    const data = applyAnswer(emptyUserData(), { id, revision: 1, correct: true, mode: 'exam', now: at('2026-11-16') });
+    expect(dailySession({ pack, data, today: '2026-11-16', size: 20, random: seeded(1) })).toContain(id);
+  });
+
+  it('после обновления содержания задание снова новое', () => {
+    const answered = answer(emptyUserData(), id, true, '2026-11-16');
+    expect(dailySession({ pack, data: answered, today: '2026-11-16', size: 20, random: seeded(1) })).not.toContain(id);
+    const newer = { ...pack, tasks: pack.tasks.map((t) => (t.id === id ? { ...t, revision: 2 } : t)) };
+    const data = reconcile(answered, newer);
+    expect(dailySession({ pack: newer, data, today: '2026-11-16', size: 20, random: seeded(1) })).toContain(id);
   });
 });

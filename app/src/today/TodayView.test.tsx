@@ -55,7 +55,7 @@ describe('TodayView', () => {
     const saved = JSON.parse(store.text!) as UserData;
     expect(saved.attempts).toHaveLength(5);
     expect(saved.attempts.every((a) => a.mode === 'daily')).toBe(true);
-    expect(saved.draft).toBeUndefined();
+    expect(saved.drafts.daily).toBeUndefined();
   });
 
   it('после перезапуска сессия продолжается с того же задания', async () => {
@@ -64,7 +64,7 @@ describe('TodayView', () => {
     await solve(true);
     await solve(true);
     expect(screen.getByText('Задание 3 из 5')).toBeInTheDocument();
-    await waitFor(() => expect((JSON.parse(first.store.text!) as UserData).draft?.position).toBe(2));
+    await waitFor(() => expect((JSON.parse(first.store.text!) as UserData).drafts.daily?.position).toBe(2));
     first.unmount();
 
     mount(<TodayView />, createFakeStore(first.store.text));
@@ -191,5 +191,36 @@ describe('TrainingView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }));
     await userEvent.click(screen.getByRole('button', { name: 'Открыть в библиотеке' }));
     expect(onOpenLibrary).toHaveBeenCalledWith({ docId: 'tk-rf', anchor: 'st-1' });
+  });
+});
+
+describe('сессия и тест не мешают друг другу', () => {
+  const exam = { kind: 'mini' as const, module: 'K' as const, ids: ['K-a-001'], answers: [null], position: 0, startedAt: NOW.getTime(), packVersion: 'x' };
+
+  it('начатый тест переживает ежедневную сессию и виден на «Сегодня»', async () => {
+    const store = createFakeStore(JSON.stringify({ ...small, drafts: { exam } }));
+    mount(<TodayView />, store);
+    expect(await screen.findByText(/Есть незаконченный тест/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Начать' }));
+    await solve(true);
+    await waitFor(() => expect((JSON.parse(store.text!) as UserData).drafts.daily?.position).toBe(1));
+    expect((JSON.parse(store.text!) as UserData).drafts.exam).toEqual(exam);
+  });
+
+  it('место в сессии запоминается сразу после ответа, до «Дальше»', async () => {
+    const { store } = mount(<TodayView />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Начать' }));
+    await userEvent.click(await screen.findByRole('radio', { name: /^\d\s?верный$/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }));
+    await waitFor(() => expect((JSON.parse(store.text!) as UserData).drafts.daily?.position).toBe(1));
+  });
+
+  it('сессию можно прервать и продолжить позже', async () => {
+    mount(<TodayView />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Начать' }));
+    await solve(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Закончить' }));
+    expect(screen.getByRole('button', { name: 'Продолжить' })).toBeInTheDocument();
+    expect(screen.getByText('осталось в начатой сессии').previousSibling).toHaveTextContent('4');
   });
 });

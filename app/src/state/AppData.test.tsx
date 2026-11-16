@@ -91,6 +91,16 @@ describe('AppDataProvider', () => {
     expect(store.text).toBe(text);
   });
 
+  it('если файл прогресса не удалось открыть, программа не начинает с нуля и ничего не пишет', async () => {
+    const save = vi.fn(async () => {});
+    const store = { load: async () => Promise.reject('io'), save };
+    mount({ store });
+    expect(await screen.findByText(/Файл с прогрессом не читается/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Сохранить копию файла' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/заданий:/)).not.toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('«Начать с чистого листа» заменяет повреждённый файл пустым прогрессом после подтверждения', async () => {
     const store = createFakeStore('мусор');
     mount({ store });
@@ -123,7 +133,7 @@ describe('AppDataProvider', () => {
 
   it('при незаконченной сессии новая база ждёт', async () => {
     const draft = { kind: 'daily' as const, ids: ['K-a-001'], answers: [null], position: 0, startedAt: 1, packVersion: '2026.11.20.1' };
-    const store = createFakeStore(JSON.stringify({ ...emptyUserData(), draft }));
+    const store = createFakeStore(JSON.stringify({ ...emptyUserData(), drafts: { daily: draft } }));
     const current = vi.fn().mockResolvedValue(makePack(4));
     const update = vi.fn(async () => 'installed' as const);
     mount({ store, tasks: { current, update } });

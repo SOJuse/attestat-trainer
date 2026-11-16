@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { grade, isComplete, type Answer } from '../core/grade';
+import { grade, isComplete, parseNumber, type Answer } from '../core/grade';
 import type { CaseStep, Task } from '../core/taskSchema';
 import { useActiveSection } from '../state/Active';
 import { emptyAnswer, shuffled, TaskInputs } from './TaskInputs';
@@ -36,6 +36,10 @@ type Props = {
   docTitles?: Record<string, string>;
   nextLabel?: string;
   random?: () => number;
+  /** показать сразу разбор с ответом человека, без проверки (протокол экзамена) */
+  review?: boolean;
+  /** уровень заголовка с вопросом: в протоколе заданий на экране несколько */
+  heading?: 'h1' | 'h3';
 };
 
 export function TaskView({
@@ -54,12 +58,15 @@ export function TaskView({
   docTitles,
   nextLabel = 'Дальше',
   random = Math.random,
+  review = false,
+  heading: Heading = 'h1',
 }: Props) {
   const size = task.type === 'single' || task.type === 'multiple' ? task.options.length : task.type === 'sequence' ? task.items.length : task.type === 'matching' ? task.pairs.length : 0;
   // порядок показа выбирается один раз на показ задания
   const [order] = useState(() => shuffled(size, random));
   const [answer, setAnswer] = useState<Answer>(() => initialAnswer ?? emptyAnswer(task, order));
-  const [result, setResult] = useState<boolean | null>(null);
+  const [result, setResult] = useState<boolean | null>(() => (review ? initialAnswer !== undefined && grade(task, initialAnswer) : null));
+  const section = useRef<HTMLElement>(null);
   const reviewed = result !== null;
   const active = useActiveSection();
   const taskId = id ?? task.id ?? '';
@@ -83,10 +90,13 @@ export function TaskView({
   });
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || review) return;
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      const typing = el?.tagName === 'SELECT' || (el?.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text');
+      const choice = el?.tagName === 'INPUT' && ['radio', 'checkbox'].includes((el as HTMLInputElement).type);
+      const typing = !choice && (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.tagName === 'SELECT' || el?.isContentEditable === true);
+      // человек печатает в другом месте окна, например в поиске библиотеки рядом с заданием
+      if (typing && !section.current?.contains(el)) return;
       const now = live.current;
       if (e.key === 'Enter' && mode === 'learn') {
         if (el?.tagName === 'BUTTON') return; // кнопка сама отработает нажатие
@@ -107,10 +117,10 @@ export function TaskView({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mode, order, active]);
+  }, [mode, order, active, review]);
 
   return (
-    <section className="view task">
+    <section className="view task" ref={section}>
       <div className="task__meta">
         <span>{meta.module}</span>
         <span>{meta.topic}</span>
@@ -123,9 +133,15 @@ export function TaskView({
       </div>
 
       {task.situation && <p className="task__situation">{task.situation}</p>}
-      <h1 className="task__question">{task.question}</h1>
+      <Heading className="task__question">{task.question}</Heading>
 
       <TaskInputs task={task} answer={answer} order={order} disabled={reviewed} onChange={change} reviewed={reviewed} />
+
+      {task.type === 'input' && answer.type === 'input' && !reviewed && answer.text.trim() !== '' && parseNumber(answer.text) === null && (
+        <p className="settings__hint" role="alert">
+          Впишите одно число, например 10 или 1,5.
+        </p>
+      )}
 
       {mode === 'learn' && !reviewed && (
         <div className="task__actions">
@@ -138,7 +154,7 @@ export function TaskView({
       {reviewed && (
         <div className="review">
           <p className={result ? 'review__result review__result--right' : 'review__result review__result--wrong'} role="status">
-            {result ? 'Верно' : 'Неверно'}
+            {result ? 'Верно' : review && initialAnswer === undefined ? 'Без ответа' : 'Неверно'}
           </p>
           {task.type === 'sequence' && (
             <div>

@@ -29,12 +29,15 @@ export function ProgressView({ onTrain }: Props) {
           if (rows.length === 0) return null;
           const seen = rows.reduce((n, s) => n + s.seen, 0);
           const total = rows.reduce((n, s) => n + s.total, 0);
+          // точность темы считается по последнему ответу на каждое пройденное задание; модуль — так же
+          const right = rows.reduce((n, s) => n + (s.accuracy ?? 0) * s.seen, 0);
+          const ready = pack.modules[module].ready;
           return (
             <div key={module}>
               <h2>
                 {pack.modules[module].title}
                 <span className="progress__note">
-                  {pack.modules[module].ready ? '' : 'в работе, '}пройдено {seen} из {total}
+                  {ready ? (seen > 0 ? `точность ${Math.round((right / seen) * 100)}%, ` : '') : 'в работе, '}пройдено {seen} из {total}
                 </span>
               </h2>
               <table className="table table--wide">

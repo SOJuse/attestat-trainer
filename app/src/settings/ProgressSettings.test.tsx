@@ -67,7 +67,7 @@ describe('перенос прогресса', () => {
   });
 
   it('загружает прогресс из файла после подтверждения', async () => {
-    const file = exportUserData({ ...withAnswers(1), draft: { kind: 'daily', ids: ['x'], answers: [null], position: 0, startedAt: 1, packVersion: 'old' } }, NOW);
+    const file = exportUserData({ ...withAnswers(1), drafts: { daily: { kind: 'daily', ids: ['x'], answers: [null], position: 0, startedAt: 1, packVersion: 'old' } } }, NOW);
     const { saved } = setup({ pickFile: async () => file });
     await userEvent.click(await screen.findByRole('button', { name: 'Загрузить прогресс из файла' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Загрузка прогресса' });
@@ -77,7 +77,7 @@ describe('перенос прогресса', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Заменить' }));
     expect(await screen.findByText('Прогресс загружен.')).toBeInTheDocument();
     await waitFor(() => expect(saved().attempts).toHaveLength(1));
-    expect(saved().draft).toBeUndefined();
+    expect(saved().drafts).toEqual({});
   });
 
   it('отмена подтверждения оставляет прежний прогресс', async () => {

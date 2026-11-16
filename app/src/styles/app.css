@@ -601,6 +601,21 @@ button {
   color: var(--ink);
 }
 
+.run__bar {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 860px;
+  margin-top: 8px;
+}
+
+.today__notice {
+  max-width: 62ch;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--softer);
+}
+
 .run {
   flex: 1;
   display: flex;

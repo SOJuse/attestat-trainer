@@ -218,3 +218,44 @@ describe('issueUrl', () => {
     expect(url.searchParams.get('body')).toContain('2026.11.20.1');
   });
 });
+
+describe('TaskView: клавиши и чужие поля ввода', () => {
+  it('цифры, набранные в поле поиска рядом с заданием, ответ не меняют', async () => {
+    const onAnswered = vi.fn();
+    render(
+      <div>
+        <input type="search" aria-label="Поиск" />
+        <TaskView task={single} meta={{ module: 'Кадры', topic: 'Отпуска' }} mode="exam" packVersion="1" onAnswered={onAnswered} random={identity} />
+      </div>,
+    );
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Поиск' }), 'ст 81 273{Enter}');
+    expect(onAnswered).not.toHaveBeenCalled();
+    for (const radio of screen.getAllByRole('radio')) expect(radio).not.toBeChecked();
+  });
+
+  it('подсказывает, если в поле числа вписано не число', async () => {
+    show(input);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Ваш ответ' }), 'три');
+    expect(screen.getByRole('alert')).toHaveTextContent('Впишите одно число');
+    await userEvent.clear(screen.getByRole('textbox', { name: 'Ваш ответ' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Ваш ответ' }), '3дня');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Проверить' })).toBeEnabled();
+  });
+});
+
+describe('TaskView: разбор в протоколе', () => {
+  it('показывает ответ человека и верный вариант без кнопок', () => {
+    show(single, { review: true, heading: 'h3', initialAnswer: { type: 'single', choice: 0 }, onNext: undefined });
+    expect(screen.getByRole('status')).toHaveTextContent('Неверно');
+    expect(screen.getByText('неверно, отмечено')).toBeInTheDocument();
+    expect(screen.getByText('верно, пропущено')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Проверить' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument();
+  });
+
+  it('задание без ответа помечено', () => {
+    show(single, { review: true, onNext: undefined });
+    expect(screen.getByRole('status')).toHaveTextContent('Без ответа');
+  });
+});

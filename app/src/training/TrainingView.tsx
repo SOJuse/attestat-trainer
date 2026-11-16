@@ -44,6 +44,10 @@ export function TrainingView({ onOpenLibrary, openExternal, initialFilter = {} }
           setRun(null);
           setFinished(results);
         }}
+        onExit={(results) => {
+          setRun(null);
+          setFinished(results.length > 0 ? results : null);
+        }}
       />
     );
   }
@@ -68,7 +72,11 @@ export function TrainingView({ onOpenLibrary, openExternal, initialFilter = {} }
       lead: (
         <div className="case__lead">
           <p>{chain.intro}</p>
-          {step.change && <p className="case__change">{step.change}</p>}
+          {step.change && (
+            <p className="case__change">
+              <b>Что изменилось.</b> {step.change}
+            </p>
+          )}
         </div>
       ),
     }));

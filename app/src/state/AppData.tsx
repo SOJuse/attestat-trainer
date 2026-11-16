@@ -2,10 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   applyAnswer,
   emptyUserData,
+  hasDraft,
   parseUserData,
   reconcile,
   setHidden,
   type Draft,
+  type DraftSlot,
   type ExamRecord,
   type Mode,
   type UserData,
@@ -26,7 +28,7 @@ export type AppData = {
   random: () => number;
   answer: (a: { id: string; revision: number; correct: boolean; mode: Mode }) => void;
   hide: (id: string) => void;
-  setDraft: (draft: Draft | undefined) => void;
+  setDraft: (slot: DraftSlot, draft: Draft | undefined) => void;
   /** Завершает экзамен одной записью: ответы, строка истории, черновик снят. */
   finishExam: (record: ExamRecord, answers: { id: string; revision: number; correct: boolean }[]) => void;
   setSettings: (settings: UserData['settings']) => void;
@@ -46,7 +48,7 @@ type Props = { platform: Platform; children: ReactNode; now?: () => Date; random
 type State =
   | { kind: 'loading' }
   | { kind: 'no-pack' }
-  | { kind: 'corrupt'; pack: TasksPack; text: string; confirming: boolean }
+  | { kind: 'corrupt'; pack: TasksPack; /** null — файл есть, но прочитать его не удалось */ text: string | null; confirming: boolean }
   | { kind: 'ready'; pack: TasksPack; data: UserData };
 
 const realNow = () => new Date();
@@ -86,7 +88,14 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
         if (alive) setState({ kind: 'no-pack' });
         return;
       }
-      const text = await platform.store.load().catch(() => null);
+      let text: string | null;
+      try {
+        text = await platform.store.load();
+      } catch {
+        // файл есть, но не читается: начинать с нуля нельзя, первый же ответ затёр бы его
+        if (alive) setState({ kind: 'corrupt', pack, text: null, confirming: false });
+        return;
+      }
       if (!alive) return;
       if (text === null) {
         setState({ kind: 'ready', pack, data: emptyUserData() });
@@ -123,21 +132,36 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
 
   // обновление базы: при запуске и раз в сутки; новая база не подменяется посреди сессии или экзамена
   const ready = state.kind === 'ready';
+  // новая база скачана и ждёт, пока закончатся сессия и тест
+  const [pendingPack, setPendingPack] = useState(false);
+  const busy = state.kind === 'ready' && hasDraft(state.data);
+  useEffect(() => {
+    if (!pendingPack || !ready || busy) return;
+    let alive = true;
+    platform.tasks
+      .current()
+      .then((pack) => {
+        if (!alive) return;
+        setPendingPack(false);
+        setState((prev) => {
+          if (prev.kind !== 'ready' || hasDraft(prev.data)) return prev;
+          const data = reconcile(prev.data, pack);
+          if (data !== prev.data) persist(data);
+          return { kind: 'ready', pack, data };
+        });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pendingPack, ready, busy, platform, persist]);
+
   useEffect(() => {
     if (!ready) return;
     let alive = true;
     const check = async () => {
       try {
-        if ((await platform.tasks.update()) !== 'installed') return;
-        if (!alive || latest.current?.draft) return;
-        const pack = await platform.tasks.current();
-        if (!alive) return;
-        setState((prev) => {
-          if (prev.kind !== 'ready' || prev.data.draft) return prev;
-          const data = reconcile(prev.data, pack);
-          if (data !== prev.data) persist(data);
-          return { kind: 'ready', pack, data };
-        });
+        if ((await platform.tasks.update()) === 'installed' && alive) setPendingPack(true);
       } catch {
         // нет сети или пакет не прошёл проверку: остаёмся на прежней базе
       }
@@ -148,7 +172,7 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
       alive = false;
       clearInterval(timer);
     };
-  }, [ready, platform, persist]);
+  }, [ready, platform]);
 
   const change = useCallback(
     (fn: (data: UserData) => UserData) => {
@@ -172,21 +196,22 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
       answer: (a: { id: string; revision: number; correct: boolean; mode: Mode }) =>
         change((d) => applyAnswer(d, { ...a, now: now() })),
       hide: (id: string) => change((d) => setHidden(d, id, true)),
-      setDraft: (draft: Draft | undefined) =>
+      setDraft: (slot: DraftSlot, draft: Draft | undefined) =>
         change((d) => {
-          const next = { ...d };
-          if (draft) next.draft = draft;
-          else delete next.draft;
-          return next;
+          const drafts = { ...d.drafts };
+          if (draft) drafts[slot] = draft;
+          else if (drafts[slot]) delete drafts[slot];
+          else return d;
+          return { ...d, drafts };
         }),
       finishExam: (record: ExamRecord, answers: { id: string; revision: number; correct: boolean }[]) =>
         change((d) => {
           const at = now();
           let next = d;
           for (const a of answers) next = applyAnswer(next, { ...a, mode: 'exam', now: at });
-          next = { ...next, exams: [...next.exams, record] };
-          delete next.draft;
-          return next;
+          const drafts = { ...next.drafts };
+          delete drafts.exam;
+          return { ...next, exams: [...next.exams, record], drafts };
         }),
       setSettings: (settings: UserData['settings']) => change((d) => ({ ...d, settings })),
       replaceData: (data: UserData) => change(() => data),
@@ -216,18 +241,27 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
     return (
       <section className="view">
         <h1>Файл с прогрессом не читается</h1>
-        <p>
-          Он повреждён или сохранён более новой версией программы. Программа его не трогала. Сохраните копию,
-          чтобы прогресс можно было восстановить, а затем начните с чистого листа или обновите программу.
-        </p>
+        {text === null ? (
+          <p>
+            Программа не смогла открыть файл с прогрессом и не трогала его. Закройте программу и откройте снова.
+            Если это повторится, можно начать с чистого листа, но прежний прогресс тогда пропадёт.
+          </p>
+        ) : (
+          <p>
+            Он повреждён или сохранён более новой версией программы. Программа его не трогала. Сохраните копию,
+            чтобы прогресс можно было восстановить, а затем начните с чистого листа или обновите программу.
+          </p>
+        )}
         <div className="task__actions">
-          <button
-            type="button"
-            className="button"
-            onClick={() => void platform.saveFile(`attestat-progress-povrezhdennyj-${stamp}.json`, text).catch(() => {})}
-          >
-            Сохранить копию файла
-          </button>
+          {text !== null && (
+            <button
+              type="button"
+              className="button"
+              onClick={() => void platform.saveFile(`attestat-progress-povrezhdennyj-${stamp}.json`, text).catch(() => {})}
+            >
+              Сохранить копию файла
+            </button>
+          )}
           {!confirming && (
             <button type="button" className="button" onClick={() => setState({ ...state, confirming: true })}>
               Начать с чистого листа

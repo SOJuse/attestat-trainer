@@ -84,9 +84,13 @@ describe('ExamView: мини-тест', () => {
     const data = saved(store);
     expect(data.exams).toHaveLength(1);
     expect(data.exams[0]).toMatchObject({ kind: 'mini', module: 'K', total: 8, correct: 4, passed: true });
-    expect(data.attempts).toHaveLength(8);
+    // в прогресс идут только отвеченные: остальных заданий человек мог и не видеть
+    expect(data.attempts).toHaveLength(4);
     expect(data.attempts.every((a) => a.mode === 'exam')).toBe(true);
-    expect(data.draft).toBeUndefined();
+    // в протоколе у ошибки виден верный вариант
+    expect(screen.getAllByText('Без ответа')).toHaveLength(4);
+    expect(screen.getAllByText('верно, пропущено').length).toBeGreaterThan(0);
+    expect(data.drafts.exam).toBeUndefined();
   });
 
   it('когда время вышло, тест завершается сам', async () => {
@@ -105,7 +109,7 @@ describe('ExamView: мини-тест', () => {
     await startMini();
     await pick(true);
     await next();
-    await waitFor(() => expect(saved(first.store).draft?.kind).toBe('mini'));
+    await waitFor(() => expect(saved(first.store).drafts.exam?.kind).toBe('mini'));
     first.unmount();
 
     const clock = { ms: first.clock.ms + 5 * 60_000 };
@@ -120,7 +124,7 @@ describe('ExamView: мини-тест', () => {
     const first = mount();
     await startMini();
     await pick(true);
-    await waitFor(() => expect(saved(first.store).draft?.answers[0]).toBeTruthy());
+    await waitFor(() => expect(saved(first.store).drafts.exam?.answers[0]).toBeTruthy());
     first.unmount();
     mount(makePack(10), createFakeStore(first.store.text), { ms: first.clock.ms + 60 * 60_000 });
     expect(await screen.findByText('Незачёт')).toBeInTheDocument();

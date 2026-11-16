@@ -3,10 +3,12 @@ import { buildExam, buildMiniTest, remainingSeconds, scoreExam, type ExamScore }
 import { EXAM, MINI } from '../core/examConfig';
 import type { Answer } from '../core/grade';
 import type { Draft } from '../core/progress';
+import { seededRandom } from '../core/seed';
 import { MODULE_CODES, type ModuleCode, type PlacedTask } from '../core/taskSchema';
 import { LibraryView } from '../library/LibraryView';
 import type { LibraryStore } from '../platform/Library';
 import { useAppData } from '../state/AppData';
+import { useDocLabels } from '../task/SessionRun';
 import { TaskView } from '../task/TaskView';
 
 type Props = { library: LibraryStore; openExternal: (url: string) => Promise<void> };
@@ -22,7 +24,7 @@ export function ExamView({ library, openExternal }: Props) {
   const app = useAppData();
   const { pack, data } = app;
   const [done, setDone] = useState<Done | null>(null);
-  const draft = data.draft && data.draft.kind !== 'daily' ? data.draft : null;
+  const draft = data.drafts.exam ?? null;
 
   const canFull = useMemo(() => buildExam({ pack, data, random: fixed }) !== null, [pack, data]);
   const miniModules = useMemo(
@@ -36,7 +38,7 @@ export function ExamView({ library, openExternal }: Props) {
   const start = (kind: Kind, module?: ModuleCode) => {
     const ids = kind === 'full' ? buildExam({ pack, data, random: app.random }) : buildMiniTest({ pack, data, module: module!, random: app.random });
     if (!ids) return;
-    app.setDraft({
+    app.setDraft('exam', {
       kind: kind === 'full' ? 'exam' : 'mini',
       module,
       ids,
@@ -130,7 +132,10 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
         passed: score.passed,
         packVersion: pack.packVersion,
       },
-      tasks.map((t, i) => ({ id: t.id, revision: t.revision, correct: current[i] !== undefined && scoreExam([t], [current[i]], 'mini').correct === 1 })),
+      // задания без ответа считаются неверными в протоколе, но в прогресс не идут: человек мог их и не видеть
+      tasks.flatMap((t, i) =>
+        current[i] === undefined ? [] : [{ id: t.id, revision: t.revision, correct: scoreExam([t], [current[i]], 'mini').correct === 1 }],
+      ),
     );
     onDone({ kind, module: draft.module, tasks, answers: current, score, timeUp });
   };
@@ -151,8 +156,11 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
     return () => clearInterval(timer);
   }, [draft.startedAt, limit, app]);
 
-  const save = (nextAnswers: (Answer | undefined)[], nextPosition: number) =>
-    app.setDraft({ ...draft, answers: nextAnswers.map((a) => a ?? null), position: nextPosition });
+  const save = (nextAnswers: (Answer | undefined)[], nextPosition: number) => {
+    // после завершения черновик уже снят: поздний щелчок не должен его вернуть
+    if (finished.current) return;
+    app.setDraft('exam', { ...draft, answers: nextAnswers.map((a) => a ?? null), position: nextPosition });
+  };
 
   const go = (index: number) => {
     setPosition(index);
@@ -161,6 +169,8 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
   };
 
   const task = tasks[position];
+  // порядок вариантов у задания один на весь тест: при возврате отметка стоит там же
+  const order = useMemo(() => seededRandom(`${task?.id}:${draft.startedAt}`), [task?.id, draft.startedAt]);
   if (!task) return null;
   const unanswered = answers.filter((a) => a === undefined).length;
   const topicTitle = pack.modules[task.module].topics.find((t) => t.id === task.topic)?.title ?? task.topic;
@@ -217,7 +227,7 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
           meta={{ module: pack.modules[task.module].title, topic: topicTitle, position: `Задание ${position + 1} из ${tasks.length}` }}
           mode="exam"
           packVersion={pack.packVersion}
-          random={app.random}
+          random={order}
           initialAnswer={answers[position]}
           onAnswered={(_, answer) => {
             const next = [...answers];
@@ -246,8 +256,11 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
 
 function Protocol({ done, onClose }: { done: Done; onClose: () => void }) {
   const { pack } = useAppData();
+  const { ocrDocs, docTitles } = useDocLabels();
   const { score, tasks, answers, kind, timeUp } = done;
-  const wrong = tasks.filter((t, i) => answers[i] === undefined || scoreExam([t], [answers[i]], 'mini').correct === 0);
+  const wrong = tasks.flatMap((t, i) =>
+    answers[i] === undefined || scoreExam([t], [answers[i]], 'mini').correct === 0 ? [{ task: t, answer: answers[i] }] : [],
+  );
 
   return (
     <section className="view">
@@ -300,16 +313,23 @@ function Protocol({ done, onClose }: { done: Done; onClose: () => void }) {
       {wrong.length > 0 && (
         <>
           <h2>Разбор ошибок</h2>
-          {wrong.map((t) => (
-            <article key={t.id} className="mistake">
-              <p className="muted">{t.situation}</p>
-              <h3>{t.question}</h3>
-              <p>{t.explanation}</p>
-              {t.refs.map((ref) => (
-                <blockquote key={`${ref.doc}#${ref.anchor}`} className="quote">
-                  {ref.quote}
-                </blockquote>
-              ))}
+          {wrong.map(({ task, answer }) => (
+            <article key={task.id} className="mistake">
+              <TaskView
+                task={task}
+                meta={{
+                  module: pack.modules[task.module].title,
+                  topic: pack.modules[task.module].topics.find((x) => x.id === task.topic)?.title ?? task.topic,
+                }}
+                mode="learn"
+                review
+                heading="h3"
+                packVersion={pack.packVersion}
+                initialAnswer={answer}
+                onAnswered={() => {}}
+                ocrDocs={ocrDocs}
+                docTitles={docTitles}
+              />
             </article>
           ))}
         </>

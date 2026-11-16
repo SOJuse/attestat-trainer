@@ -1,4 +1,5 @@
 import { Card, CaseChain, Task, type TaskRef } from '../../app/src/core/taskSchema';
+import { checkBalance } from './balance';
 import { loadDoc, loadTopics } from './corpus';
 import { loadTasks, type Raw } from './tasks';
 
@@ -76,6 +77,7 @@ export function validateTasks(root: string): string[] {
   const topicKnown = (module: string, topic: string) =>
     topics.modules[module as keyof typeof topics.modules].topics.some((t) => t.id === topic);
 
+  const placed: Record<string, { task: Task; topic: string }[]> = {};
   for (const raw of tasks) {
     const id = idOf(raw, raw.file);
     unique(id);
@@ -89,6 +91,12 @@ export function validateTasks(root: string): string[] {
       errors.push(`${id}: модуль и тема в id не совпадают с папкой ${raw.file}`);
     }
     checkRefs(id, parsed.data.refs);
+    (placed[raw.module] ??= []).push({ task: parsed.data, topic: raw.topic });
+  }
+
+  // баланс считается только у модулей, объявленных готовыми
+  for (const [module, info] of Object.entries(topics.modules)) {
+    if (info.ready) errors.push(...checkBalance(module, info.topics.map((t) => t.id), placed[module] ?? []));
   }
 
   for (const raw of cases) {

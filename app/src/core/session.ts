@@ -26,14 +26,15 @@ export function dailySession({ pack, data, today, size, random }: DailyInput): s
     .slice(0, size);
   if (due.length >= size) return due;
 
-  const answered = new Set(data.attempts.map((a) => a.id));
   const weak = new Set(
     topicStats(pack, data)
       .filter((s) => s.weak)
       .map((s) => `${s.module}/${s.topic}`),
   );
   const pool = visible
-    .filter((t) => !answered.has(t.id))
+    // новое — всё, чего нет в очереди повторений: и то, на что не отвечали, и то, что верно решили
+    // только на экзамене, и задание с обновлённым содержанием
+    .filter((t) => !data.items[t.id]?.srs)
     .map((t) => ({ id: t.id, weight: weak.has(`${t.module}/${t.topic}`) ? WEAK_WEIGHT : 1 }));
 
   const fresh: string[] = [];

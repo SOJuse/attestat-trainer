@@ -11,11 +11,11 @@ export type Answer =
 type Gradable = Task | CaseStep;
 
 /**
- * Число из того, что вписал человек: «1,5», « 1.5 », «10 дней».
+ * Число из того, что вписал человек: «1,5», « 1.5 », «10 дней», «30%», «72ч».
  * Число должно стоять в начале и быть одним; всё прочее — null.
  */
 export function parseNumber(text: string): number | null {
-  const m = text.trim().match(/^(\d+(?:[.,]\d+)?)(?:\s+(?!\d).*)?$/);
+  const m = text.trim().match(/^(\d+(?:[.,]\d+)?)(?![.,\d])/);
   if (!m) return null;
   // после числа допустима единица измерения, но не второе число и не «или 4»
   const rest = text.trim().slice(m[1].length);

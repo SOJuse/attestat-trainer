@@ -41,6 +41,7 @@ export function createFakeTasks(overrides: Partial<TasksSource> = {}): TasksSour
       packVersion: '2026.01.01.1',
       pilot: true,
       modules: { K: EMPTY_MODULE, R: EMPTY_MODULE, P: EMPTY_MODULE, Rez: EMPTY_MODULE, I: EMPTY_MODULE },
+      docs: {},
       tasks: [],
       cases: [],
       cards: [],

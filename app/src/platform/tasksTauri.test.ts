@@ -67,6 +67,20 @@ describe('база заданий в настольной версии', () => {
     expect(without.fetchImpl).toHaveBeenCalledTimes(1);
   });
 
+  it('база с заданием непонятного типа или с чужой версией не ставится', async () => {
+    const odd = { ...newer, tasks: [{ ...newer.tasks[0], type: 'essay' }] };
+    const oddBytes = new TextEncoder().encode(JSON.stringify(odd));
+    const serve = (payload: Uint8Array<ArrayBuffer>, m: object) =>
+      vi.fn(async (url: string) => (url.endsWith('manifest.json') ? new Response(JSON.stringify(m)) : new Response(payload)));
+    const strange = deps({ fetchImpl: serve(oddBytes, manifest({ tasks: { ...manifest().tasks, bytes: oddBytes.length } })) });
+    await expect(createTasksSource(strange).update()).rejects.toMatchObject({ code: 'bad-pack' });
+    expect(strange.install).not.toHaveBeenCalled();
+
+    const other = deps({ fetchImpl: serve(bytes, manifest({ packVersion: '2026.12.05.1' })) });
+    await expect(createTasksSource(other).update()).rejects.toMatchObject({ code: 'bad-pack' });
+    expect(other.install).not.toHaveBeenCalled();
+  });
+
   it('отказ проверки подписи доходит кодом ошибки', async () => {
     const d = deps({ install: async () => Promise.reject('signature') });
     await expect(createTasksSource(d).update()).rejects.toMatchObject({ code: 'signature' });

@@ -14,7 +14,9 @@ pub fn load(dir: &Path) -> Result<Option<String>, String> {
     if !path.exists() {
         return Ok(None);
     }
-    fs::read_to_string(path).map(Some).map_err(|_| "io".to_string())
+    // Байты, которые не складываются в текст, не причина для отказа: интерфейс увидит, что файл
+    // не разбирается, и предложит человеку выбор. Ошибка чтения — другое дело, она уходит наверх.
+    fs::read(path).map(|bytes| Some(String::from_utf8_lossy(&bytes).into_owned())).map_err(|_| "io".to_string())
 }
 
 pub fn save(dir: &Path, text: &str) -> Result<(), String> {
@@ -100,6 +102,22 @@ mod tests {
     fn no_file_yet_is_none() {
         let dir = tempfile::tempdir().unwrap();
         assert_eq!(load(dir.path()), Ok(None));
+    }
+
+    #[test]
+    fn file_with_broken_bytes_is_still_returned_for_the_interface_to_judge() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("userdata.json"), [b'{', 0xff, 0xfe, b'}']).unwrap();
+        let text = load(dir.path()).unwrap().unwrap();
+        assert!(text.starts_with('{') && text.ends_with('}'));
+    }
+
+    #[test]
+    fn unreadable_file_is_an_error_not_an_empty_start() {
+        let dir = tempfile::tempdir().unwrap();
+        // на месте файла каталог: прочитать его как файл нельзя
+        fs::create_dir(dir.path().join("userdata.json")).unwrap();
+        assert_eq!(load(dir.path()), Err("io".to_string()));
     }
 
     #[test]

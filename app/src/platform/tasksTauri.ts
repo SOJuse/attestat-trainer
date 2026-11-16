@@ -39,6 +39,14 @@ export function createTasksSource(deps: TasksDeps): TasksSource {
       if (!isNewer(manifest.packVersion, have.packVersion)) return 'up-to-date';
       const { file, sha256, signature, bytes } = manifest.tasks;
       const body = await download(deps.fetchImpl, PACK_BASE_URL + file, bytes);
+      // Ставим только базу, которую эта программа понимает целиком и которая действительно новее:
+      // иначе непонятный файл заменил бы на диске рабочую базу.
+      try {
+        const { pack, skipped } = parseTasksPack(JSON.parse(new TextDecoder().decode(body)));
+        if (skipped.length > 0 || pack.packVersion !== manifest.packVersion) throw new Error('не та база');
+      } catch {
+        throw new LibraryError('bad-pack');
+      }
       try {
         await deps.install(body, sha256, signature);
       } catch (e) {

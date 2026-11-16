@@ -21,12 +21,11 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
   const [running, setRunning] = useState<{ ids: string[]; startAt: number; results: boolean[] } | null>(null);
   const [finished, setFinished] = useState<boolean[] | null>(null);
 
-  const draft = data.draft?.kind === 'daily' ? data.draft : null;
-  // состав считается один раз на вход в раздел: иначе он менялся бы после каждого ответа
+  const draft = data.drafts.daily ?? null;
+  // состав пересчитывается по текущему прогрессу; у начатой сессии он записан в черновике и не меняется
   const planned = useMemo(
     () => dailySession({ pack, data, today, size: data.settings.dailySize, random: app.random }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pack, today, data.settings.dailySize, finished],
+    [pack, data, today, app.random],
   );
 
   const byId = useMemo(() => new Map(pack.tasks.map((t) => [t.id, t])), [pack]);
@@ -47,8 +46,9 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
         initialResults={running.results}
         onOpenLibrary={onOpenLibrary}
         openExternal={openExternal}
+        onExit={() => setRunning(null)}
         onPosition={(position, results) =>
-          app.setDraft({
+          app.setDraft('daily', {
             kind: 'daily',
             ids: running.ids,
             answers: results,
@@ -58,7 +58,7 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
           })
         }
         onFinish={(results) => {
-          app.setDraft(undefined);
+          app.setDraft('daily', undefined);
           setRunning(null);
           setFinished(results);
         }}
@@ -89,10 +89,16 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
   const start = () => {
     if (draft) {
       const results = draft.answers.filter((a): a is boolean => typeof a === 'boolean');
+      if (draft.position >= draft.ids.length) {
+        // на последнее задание уже ответили, оставалось только закрыть сессию
+        app.setDraft('daily', undefined);
+        setFinished(results);
+        return;
+      }
       setRunning({ ids: draft.ids, startAt: draft.position, results });
       return;
     }
-    app.setDraft({ kind: 'daily', ids: planned, answers: [], position: 0, startedAt: app.now().getTime(), packVersion: pack.packVersion });
+    app.setDraft('daily', { kind: 'daily', ids: planned, answers: [], position: 0, startedAt: app.now().getTime(), packVersion: pack.packVersion });
     setRunning({ ids: planned, startAt: 0, results: [] });
   };
 
@@ -112,12 +118,16 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
         </p>
       )}
 
+      {data.drafts.exam && (
+        <p className="today__notice">Есть незаконченный тест. Он ждёт в разделе «Экзамен», время идёт.</p>
+      )}
+
       {pack.tasks.length === 0 ? (
         <p>В базе пока нет заданий. Они появятся с обновлением базы.</p>
       ) : draft ? (
         <div className="plan">
           <div className="figure">
-            <b>{draft.ids.length - draft.position}</b>
+            <b>{Math.max(draft.ids.length - draft.position, 0)}</b>
             <span>осталось в начатой сессии</span>
           </div>
           <button type="button" className="button button--primary" onClick={start}>

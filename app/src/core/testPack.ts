@@ -23,6 +23,7 @@ export function makePack(perModule: number, over: Partial<TasksPack> = {}): Task
     packVersion: '2026.11.20.1',
     pilot: false,
     modules: { K: info('K'), R: info('R'), P: info('P'), Rez: info('Rez'), I: info('I') },
+    docs: {},
     tasks,
     cases: [],
     cards: [],

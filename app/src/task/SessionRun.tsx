@@ -24,6 +24,8 @@ type Props = {
   /** вызывается при переходе к следующему заданию: с какого места продолжать и что уже отвечено */
   onPosition?: (position: number, results: boolean[]) => void;
   onFinish: (results: boolean[]) => void;
+  /** человек прервал набор: что успел ответить */
+  onExit?: (results: boolean[]) => void;
   onOpenLibrary?: (at: { docId: string; anchor: string }) => void;
   openExternal?: (url: string) => Promise<void>;
   initialResults?: boolean[];
@@ -39,6 +41,7 @@ export function SessionRun({
   label = defaultLabel,
   onPosition,
   onFinish,
+  onExit,
   onOpenLibrary,
   openExternal,
   initialResults = [],
@@ -47,14 +50,7 @@ export function SessionRun({
   const [position, setPosition] = useState(Math.min(startAt, Math.max(0, items.length - 1)));
   const [results, setResults] = useState<boolean[]>(initialResults);
 
-  const ocrDocs = useMemo(
-    () => new Set(Object.values(app.docs).filter((d) => d.textStatus === 'ocr').map((d) => d.id)),
-    [app.docs],
-  );
-  const docTitles = useMemo(
-    () => Object.fromEntries(Object.values(app.docs).map((d) => [d.id, d.short ?? d.title])),
-    [app.docs],
-  );
+  const { ocrDocs, docTitles } = useDocLabels();
 
   const item = items[position];
   if (!item) return null;
@@ -63,11 +59,17 @@ export function SessionRun({
   const next = (after: boolean[]) => {
     if (last) return onFinish(after);
     setPosition(position + 1);
-    onPosition?.(position + 1, after);
   };
 
   return (
     <div className="run">
+      {onExit && (
+        <div className="run__bar">
+          <button type="button" className="link" onClick={() => onExit(results)}>
+            Закончить
+          </button>
+        </div>
+      )}
       {item.lead}
       <TaskView
         key={item.id}
@@ -82,11 +84,15 @@ export function SessionRun({
         nextLabel={last ? 'Завершить' : 'Дальше'}
         onAnswered={(correct) => {
           app.answer({ id: item.id, revision: item.revision, correct, mode });
-          setResults((prev) => [...prev, correct]);
+          const after = [...results, correct];
+          setResults(after);
+          // место запоминается сразу: после перезапуска то же задание второй раз не спросят
+          onPosition?.(position + 1, after);
         }}
         onNext={() => next(results)}
         onHide={() => {
           app.hide(item.id);
+          onPosition?.(position + 1, results);
           next(results);
         }}
         onOpenLibrary={onOpenLibrary}
@@ -94,6 +100,21 @@ export function SessionRun({
       />
     </div>
   );
+}
+
+/** Подписи под цитатами: название документа и пометка «распознано со скана». Библиотека уточняет то, что есть в базе. */
+export function useDocLabels(): { ocrDocs: Set<string>; docTitles: Record<string, string> } {
+  const { docs, pack } = useAppData();
+  return useMemo(() => {
+    const ocrDocs = new Set(Object.entries(pack.docs).flatMap(([id, d]) => (d.ocr ? [id] : [])));
+    const docTitles = Object.fromEntries(Object.entries(pack.docs).map(([id, d]) => [id, d.title]));
+    for (const d of Object.values(docs)) {
+      docTitles[d.id] = d.short ?? d.title;
+      if (d.textStatus === 'ocr') ocrDocs.add(d.id);
+      else ocrDocs.delete(d.id);
+    }
+    return { ocrDocs, docTitles };
+  }, [docs, pack]);
 }
 
 /** Итог сессии. */

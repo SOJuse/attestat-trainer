@@ -63,8 +63,7 @@ export function ProgressSettings({ platform }: { platform: Platform }) {
 
   const confirmImport = (incoming: UserData) => {
     // незаконченная сессия из файла могла быть начата на другой базе: её не переносим
-    const next = { ...incoming };
-    delete next.draft;
+    const next = { ...incoming, drafts: {} };
     app.replaceData(reconcile(next, pack));
     setSize(String(next.settings.dailySize));
     setDialog({ kind: 'none' });

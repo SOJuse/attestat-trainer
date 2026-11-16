@@ -3,6 +3,7 @@ import {
   applyAnswer,
   emptyUserData,
   exportUserData,
+  hasDraft,
   importUserData,
   parseUserData,
   reconcile,
@@ -11,6 +12,7 @@ import {
   type UserData,
 } from './progress';
 import type { TasksPack } from './taskSchema';
+import { makePack } from './testPack';
 
 const NOW = new Date(2026, 10, 16, 10, 0, 0);
 const code = (fn: () => unknown) => {
@@ -48,7 +50,7 @@ describe('applyAnswer', () => {
   it('записывает попытку и ставит задание в очередь повторений', () => {
     const d = answer(emptyUserData(), true);
     expect(d.attempts).toEqual([
-      { id: 'K-otpuska-001', at: NOW.toISOString(), day: '2026-11-16', correct: true, mode: 'daily', first: true },
+      { id: 'K-otpuska-001', at: NOW.toISOString(), day: '2026-11-16', correct: true, mode: 'daily', revision: 1, first: true },
     ]);
     expect(d.items['K-otpuska-001']).toEqual({ revision: 1, srs: { box: 0, due: '2026-11-17' } });
   });
@@ -131,5 +133,54 @@ describe('перенос файлом', () => {
     ['пустой файл', '', 'not-json'],
   ])('отказ: %s', (_, text, expected) => {
     expect(code(() => importUserData(text))).toBe(expected);
+  });
+});
+
+describe('черновики и новая база', () => {
+  const pack = makePack(1);
+  const ids = pack.tasks.slice(0, 4).map((t) => t.id);
+  const exam = { kind: 'mini' as const, module: 'K' as const, ids, answers: ['a', 'b', null, 'd'], position: 3, startedAt: 1, packVersion: 'x' };
+  const daily = { kind: 'daily' as const, ids, answers: [true, false], position: 2, startedAt: 1, packVersion: 'x' };
+  const without = (id: string) => ({ ...pack, tasks: pack.tasks.filter((t) => t.id !== id) });
+
+  it('сессия и тест хранятся отдельно', () => {
+    const data = { ...emptyUserData(), drafts: { daily, exam } };
+    expect(parseUserData(JSON.parse(JSON.stringify(data))).drafts).toEqual({ daily, exam });
+    expect(hasDraft(data)).toBe(true);
+    expect(hasDraft(emptyUserData())).toBe(false);
+  });
+
+  it('если база не менялась, черновики остаются теми же', () => {
+    const data = { ...emptyUserData(), drafts: { daily, exam } };
+    expect(reconcile(data, pack)).toBe(data);
+  });
+
+  it('пропавшее задание выпадает из теста вместе со своим ответом', () => {
+    const data = reconcile({ ...emptyUserData(), drafts: { exam } }, without(ids[1]));
+    expect(data.drafts.exam).toMatchObject({ ids: [ids[0], ids[2], ids[3]], answers: ['a', null, 'd'], position: 2 });
+  });
+
+  it('в сессии место сдвигается, если пропало уже пройденное задание', () => {
+    const data = reconcile({ ...emptyUserData(), drafts: { daily } }, without(ids[0]));
+    expect(data.drafts.daily).toMatchObject({ ids: ids.slice(1), position: 1 });
+  });
+
+  it('черновик без единого задания снимается', () => {
+    const data = reconcile({ ...emptyUserData(), drafts: { exam } }, { ...pack, tasks: [] });
+    expect(data.drafts).toEqual({});
+  });
+});
+
+describe('первый ответ после обновления задания', () => {
+  it('считается первым и после сверки с базой', () => {
+    const pack = makePack(1);
+    const id = pack.tasks[0].id;
+    const before = applyAnswer(emptyUserData(), { id, revision: 1, correct: false, mode: 'daily', now: NOW });
+    const newer = { ...pack, tasks: pack.tasks.map((t) => (t.id === id ? { ...t, revision: 2 } : t)) };
+    const after = applyAnswer(reconcile(before, newer), { id, revision: 2, correct: true, mode: 'daily', now: NOW });
+    expect(after.attempts.map((a) => [a.revision, a.first])).toEqual([
+      [1, true],
+      [2, true],
+    ]);
   });
 });

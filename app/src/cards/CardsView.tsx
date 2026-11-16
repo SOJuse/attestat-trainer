@@ -24,8 +24,8 @@ export function CardsView() {
     [pack, module, data.items],
   );
   const due = pool.filter((c) => isDue(data.items[c.id]?.srs, today));
-  const seen = new Set(data.attempts.map((a) => a.id));
-  const fresh = pool.filter((c) => !seen.has(c.id));
+  // новая — карточка, которой нет в очереди повторений (в том числе после обновления её текста)
+  const fresh = pool.filter((c) => !data.items[c.id]?.srs);
 
   const flip = () => setRun((r) => (r && !r.flipped ? { ...r, flipped: true } : r));
 
@@ -83,6 +83,18 @@ export function CardsView() {
           )}
         </div>
         {!run.flipped && <p className="muted">Можно нажать пробел.</p>}
+        <div className="run__bar">
+          <button
+            type="button"
+            className="link"
+            onClick={() => {
+              setRun(null);
+              setFinished(run.known.length > 0 ? run.known : null);
+            }}
+          >
+            Закончить
+          </button>
+        </div>
       </section>
     );
   }
