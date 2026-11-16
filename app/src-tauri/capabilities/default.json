@@ -12,6 +12,18 @@
       "allow": [
         {
           "url": "https://github.com/*"
+        },
+        {
+          "url": "http://actual.pravo.gov.ru/*"
+        },
+        {
+          "url": "http://publication.pravo.gov.ru/*"
+        },
+        {
+          "url": "http://www.kremlin.ru/*"
+        },
+        {
+          "url": "http://government.ru/*"
         }
       ]
     },

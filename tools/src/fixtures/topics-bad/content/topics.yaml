@@ -1,0 +1,16 @@
+modules:
+  K:
+    title: Кадры
+    ready: false
+    topics:
+      - id: otpuska
+        title: Отпуска
+        why: Проверка.
+        docs:
+          - { doc: tk-rf, anchors: [st-256, st-999] }
+          - { doc: lit-9, anchors: [] }
+          - { doc: no-such-doc }
+  R: { title: Ресурсы, ready: false, topics: [] }
+  P: { title: Процессы, ready: false, topics: [] }
+  Rez: { title: Результаты, ready: false, topics: [] }
+  I: { title: Информация, ready: false, topics: [] }

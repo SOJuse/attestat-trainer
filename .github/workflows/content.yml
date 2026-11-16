@@ -1,0 +1,95 @@
+name: content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'content/**'
+      - 'tools/**'
+      - 'app/src/core/stem.ts'
+      - 'app/package-lock.json'
+      - '.github/workflows/content.yml'
+  workflow_dispatch:
+
+# права выдаются каждой задаче отдельно
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Сборка пакета: здесь ставятся зависимости и выполняется код проекта, секретов и прав нет.
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+        working-directory: app
+      - run: npm ci
+        working-directory: tools
+      - run: npm test
+        working-directory: tools
+      - run: npm run validate
+        working-directory: tools
+      - run: npm run build:library -- --out ../pack --build ${{ github.run_number }}
+        working-directory: tools
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pack
+          path: pack
+          retention-days: 3
+
+  # Подпись: отдельная машина без кода и зависимостей проекта. Ключ пакетов — не ключ обновлений
+  # программы: им нельзя подписать саму программу.
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pack
+          path: site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Подписать пакет
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.PACK_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: npx --yes @tauri-apps/cli@2.12.4 signer sign site/library.sqlite.gz
+      - name: Записать подпись в манифест
+        run: |
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("site/manifest.json", "utf8"));
+            const sig = fs.readFileSync("site/" + m.library.file + ".sig", "utf8").trim();
+            if (!sig) throw new Error("пустая подпись");
+            m.library.signature = sig;
+            fs.writeFileSync("site/manifest.json", JSON.stringify(m, null, 2) + "\n");
+            fs.unlinkSync("site/" + m.library.file + ".sig");
+          '
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: sign
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

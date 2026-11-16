@@ -1,7 +1,7 @@
 {
   "name": "attestat-trainer",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,7 +18,8 @@
     "@tauri-apps/plugin-process": "^2.4.0",
     "@tauri-apps/plugin-updater": "^2.14.1",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "snowball-stemmers": "^0.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

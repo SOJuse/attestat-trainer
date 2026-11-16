@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Attestat1103",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "identifier": "io.github.sojuse.attestat-trainer",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost https://sojuse.github.io; object-src 'none'; base-uri 'self'; form-action 'none'"
     }
   },
   "bundle": {

@@ -1,0 +1,14 @@
+id: konstitutsiya-rf
+title: Конституция Российской Федерации
+kind: federal-law
+date: '1993-12-12'
+edition: '2022-10-04'
+edition_status: current
+source_url: http://www.kremlin.ru/acts/constitution/item
+fetched: '2026-11-16'
+modules:
+- P
+text: full
+note: Текст Конституции с сайта Президента России с изменениями, одобренными 1 июля 2020 г., и наименованиями субъектов
+  по ФКЗ от 4 октября 2022 г. № 5-ФКЗ – 8-ФКЗ; сноски сайта о поправках не перенесены.
+list_no: 1
