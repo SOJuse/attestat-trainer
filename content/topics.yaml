@@ -607,12 +607,6 @@ modules:
       - doc: pgsv-32
         anchors:
         - pril-1-p-1
-        - pril-1-razdel-1
-        - pril-1-razdel-3
-        - pril-1-razdel-4
-        - pril-1-razdel-5
-        - pril-1-razdel-6
-        - pril-1-razdel-7
         - pril-7
         - pril-8
       - doc: koap-rf
@@ -629,8 +623,6 @@ modules:
         - pril-1-p-1
         - pril-1-razdel-1
         - pril-1-razdel-2
-        - pril-1-razdel-3
-        - pril-1-razdel-4
       - doc: fz-273
         anchors:
         - st-41
@@ -690,9 +682,8 @@ modules:
         anchors:
         - pril-1-p-1
         - pril-1-razdel-1
-        - pril-1-razdel-2
-        - pril-1-razdel-34
-        - pril-1-razdel-132
+        - pril-1-razdel-14
+        - pril-1-razdel-64
       - doc: tk-rf
         anchors:
         - st-214
@@ -853,10 +844,10 @@ modules:
         - pril-1-p-26
         - pril-1-p-27
         - pril-1-p-32
-        - pril-1-razdel-8
+        - pril-1-razdel-1
       - doc: prikaz-779
         anchors:
-        - pril-1-razdel-1
+        - pril-1
       - doc: lit-2
         anchors:
         - razdel-12
@@ -877,7 +868,7 @@ modules:
         - pril-1-p-18
       - doc: prikaz-287
         anchors:
-        - pril-1-razdel-7
+        - pril-1-p-32
       - doc: konstitutsiya-rf
         anchors:
         - st-67-1
@@ -1047,8 +1038,7 @@ modules:
       - doc: pgsv-28
         anchors:
         - pril-1-p-1
-        - pril-1-razdel-3
-        - pril-1-razdel-4
+        - pril-1-razdel-2
       - doc: tk-rf
         anchors:
         - st-76
@@ -1068,7 +1058,6 @@ modules:
         - pril-1-p-6
         - pril-1-p-8
         - pril-1-p-9
-        - pril-1-razdel-1
         - pril-1-p-10
         - pril-1-p-13
         - pril-1-p-14
@@ -1172,11 +1161,7 @@ modules:
         - pril-1-p-22
         - pril-1-p-23
         - pril-1-p-24
-        - pril-1-razdel-3
-        - pril-1-razdel-4
         - pril-1-p-25
-        - pril-1-razdel-5
-        - pril-1-razdel-6
         - pril-1-p-26
         - pril-1-p-27
         - pril-1-p-28
@@ -1206,8 +1191,7 @@ modules:
         - pril-1-p-63
         - pril-1-p-64
         - pril-1-p-66
-        - pril-1-razdel-13
-        - pril-1-razdel-14
+        - pril-1-razdel-3
         - pril-1-p-68
       - doc: prikaz-232-551
         anchors:
@@ -1215,9 +1199,8 @@ modules:
         - pril-1-p-40
         - pril-1-p-49
         - pril-1-p-54
-        - pril-1-razdel-3
         - pril-1-p-56
-        - pril-1-razdel-4
+        - pril-1-p-57
       - doc: prikaz-924
         anchors:
         - pril-1-p-1
@@ -1235,13 +1218,11 @@ modules:
         - pril-1-p-70
         - pril-1-p-71
         - pril-1-p-72
-        - pril-1-razdel-16
         - pril-1-p-73
-        - pril-1-razdel-22
+        - pril-1-p-80
         - pril-1-p-89
         - pril-1-p-90
         - pril-1-p-91
-        - pril-1-razdel-24
       - doc: prikaz-232-551
         anchors:
         - pril-1-p-61
@@ -1318,7 +1299,6 @@ modules:
         - pril-1-p-2
         - pril-1-p-3
         - pril-1-p-5
-        - pril-1-razdel-2
         - pril-1-p-7
         - pril-1-p-8
         - pril-1-p-9
@@ -1328,7 +1308,6 @@ modules:
         - pril-1-p-21
         - pril-1-p-22
         - pril-1-p-23
-        - pril-1-razdel-4
         - pril-1-p-25
         - pril-1-p-26
       - doc: prikaz-730
@@ -1360,7 +1339,7 @@ modules:
       - doc: prikaz-287
         anchors:
         - pril-1-p-23
-        - pril-1-razdel-5
+        - pril-1-p-31
     - id: otsenka-kachestva
       title: 'Оценка качества образования: ВСОКО, самообследование, независимая оценка, олимпиады'
       why: Проверяет, как директор выстраивает внутреннюю систему оценки качества и самообследование, как использует
@@ -1505,7 +1484,7 @@ modules:
         - st-13-14
       - doc: prikaz-250n
         anchors:
-        - pril-1-razdel-51
+        - pril-1-razdel-48
     - id: publikacii-foto-i-reputaciya
       title: Публикации об учениках и работниках — фото, сведения для распространения, честь и репутация
       why: Можно ли и на каких условиях размещать фото и сведения о детях и работниках на сайте, стендах, в соцсетях
@@ -1560,7 +1539,7 @@ modules:
         - pril-1-p-26
       - doc: prikaz-250n
         anchors:
-        - pril-1-razdel-53
+        - pril-1-razdel-50
     - id: otkrytost-i-otchetnost
       title: Открытость учреждения — bus.gov.ru, самообследование, независимая оценка качества, запросы информации
       why: Какие документы школа размещает на bus.gov.ru, как отчитывается перед учредителем и общественностью,
@@ -1583,7 +1562,7 @@ modules:
         - st-5-39
       - doc: prikaz-250n
         anchors:
-        - pril-1-razdel-46
+        - pril-1-razdel-43
     - id: obrashcheniya-registraciya-i-sroki
       title: Обращения граждан — регистрация, переадресация, сроки и ответ (в том числе через Госуслуги)
       why: Как школа принимает письменные и электронные обращения (в том числе через платформу обратной связи ЕПГУ),
@@ -1783,5 +1762,5 @@ modules:
         - pril-1-p-15
       - doc: prikaz-250n
         anchors:
-        - pril-1-razdel-67
-        - pril-1-razdel-68
+        - pril-1-razdel-61
+        - pril-1-razdel-62
