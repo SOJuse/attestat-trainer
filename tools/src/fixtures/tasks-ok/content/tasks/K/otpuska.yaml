@@ -1,0 +1,25 @@
+- id: K-otpuska-001
+  type: single
+  difficulty: 1
+  situation: Работница просит предоставить ей отпуск по уходу за ребёнком.
+  question: Что для этого нужно? Выберите один вариант.
+  options:
+    - { text: Её заявление, correct: true, why: Отпуск предоставляется по заявлению. }
+    - { text: Согласие профсоюза, correct: false, why: Такого условия в норме нет. }
+    - { text: Приказ учредителя, correct: false, why: Учредитель в этом не участвует. }
+  explanation: Отпуск по уходу за ребёнком предоставляется по заявлению женщины.
+  refs:
+    - { doc: tk-rf, anchor: st-256, quote: 'По заявлению женщины ей предоставляется   отпуск по уходу за ребёнком' }
+  revision: 1
+  checked: '2026-11-18'
+- id: K-otpuska-002
+  type: input
+  difficulty: 2
+  situation: Директор считает число способов использовать отпуск.
+  question: Сколько их названо? Впишите число.
+  answer: 1
+  explanation: Назван один способ.
+  refs:
+    - { doc: tk-rf, anchor: st-256, quote: Женщина может выйти на работу }
+  revision: 2
+  checked: '2026-11-18'

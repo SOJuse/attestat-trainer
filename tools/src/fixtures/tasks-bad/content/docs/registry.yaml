@@ -1,0 +1,5 @@
+docs:
+  - { id: tk-rf, list_no: 8, section: Федеральные законы, title: Трудовой кодекс, kind: federal-law, number: 197-ФЗ, date: '2001-12-30', modules: [K, R] }
+  - { id: fz-273, list_no: 14, section: Федеральные законы, title: Об образовании, kind: federal-law, number: 273-ФЗ, date: '2012-12-29', modules: [P] }
+  - { id: lit-9, list_no: 9, section: Москва, title: Письмо без текста, kind: letter, modules: [I] }
+  - { id: prikaz-373, list_no: 100, section: Приказы, title: Порядок дошкольного образования, kind: ministry, number: '373', date: '2020-07-31', modules: [P] }

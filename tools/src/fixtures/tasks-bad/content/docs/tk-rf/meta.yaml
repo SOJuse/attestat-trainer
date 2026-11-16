@@ -1,0 +1,12 @@
+id: tk-rf
+title: Трудовой кодекс Российской Федерации
+short: ТК РФ
+kind: federal-law
+number: 197-ФЗ
+date: '2001-12-30'
+edition: '2026-09-01'
+source_url: http://actual.pravo.gov.ru/text.html#hash=abc
+fetched: '2026-11-16'
+modules: [K, R]
+list_no: 8
+text: full

@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "validate": "tsx src/validate.ts ..",
     "build:library": "tsx src/build-library.ts",
+    "build:tasks": "tsx src/build-tasks.ts",
     "sign:manifest": "tsx src/sign-manifest.ts"
   },
   "devDependencies": {

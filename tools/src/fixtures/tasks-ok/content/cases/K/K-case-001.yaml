@@ -1,0 +1,35 @@
+id: K-case-001
+topic: otpuska
+title: Отпуск по уходу за ребёнком
+intro: Работница детского сада ушла в отпуск по уходу за ребёнком.
+steps:
+  - change: ''
+    type: single
+    difficulty: 1
+    question: На основании чего предоставлен отпуск?
+    options:
+      - { text: По заявлению, correct: true, why: Так сказано в статье. }
+      - { text: По приказу учредителя, correct: false, why: Нет. }
+      - { text: По решению суда, correct: false, why: Нет. }
+    explanation: По заявлению женщины.
+    refs: [{ doc: tk-rf, anchor: st-256, quote: По заявлению женщины }]
+  - change: Через полгода она хочет выйти на работу.
+    type: single
+    difficulty: 2
+    question: Может ли она выйти?
+    options:
+      - { text: Может, correct: true, why: Так сказано в статье. }
+      - { text: Не может, correct: false, why: Нет. }
+      - { text: Только с согласия директора, correct: false, why: Нет. }
+    explanation: Женщина может выйти на работу.
+    refs: [{ doc: tk-rf, anchor: st-256, quote: Женщина может выйти на работу }]
+  - change: Она решает использовать отпуск частично.
+    type: single
+    difficulty: 2
+    question: Допустимо ли это?
+    options:
+      - { text: Допустимо, correct: true, why: Так сказано в статье. }
+      - { text: Недопустимо, correct: false, why: Нет. }
+      - { text: Только один раз, correct: false, why: Нет. }
+    explanation: Отпуском можно пользоваться частично.
+    refs: [{ doc: tk-rf, anchor: st-256, quote: пользуясь отпуском частично }]
