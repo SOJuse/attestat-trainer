@@ -119,7 +119,7 @@ struct Info {
     pack_version: String,
 }
 
-fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()
 }
 
@@ -165,7 +165,7 @@ pub fn status(dir: &Path) -> Status {
 
 /// Проверяет подпись пакета. Ключ и подпись — в том виде, в каком их выдаёт `tauri signer`:
 /// base64 от текста файла minisign.
-fn verify_signature(gz: &[u8], signature: &str, pubkey: &str) -> Res<()> {
+pub(crate) fn verify_signature(gz: &[u8], signature: &str, pubkey: &str) -> Res<()> {
     use base64::Engine;
     let decode = |text: &str| {
         base64::engine::general_purpose::STANDARD

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { SettingsView } from './components/SettingsView';
 import { Sidebar } from './components/Sidebar';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -9,6 +10,7 @@ import { LibraryView, type OpenAt } from './library/LibraryView';
 import type { Platform } from './platform/Platform';
 import { ProgressView } from './progress/ProgressView';
 import type { SectionId } from './sections';
+import { ProgressSettings } from './settings/ProgressSettings';
 import { ActiveSection } from './state/Active';
 import { AppDataProvider } from './state/AppData';
 import { TodayView } from './today/TodayView';
@@ -20,6 +22,9 @@ export default function App({ platform }: { platform: Platform }) {
   const [visited, setVisited] = useState<SectionId[]>(['today']);
   // куда открыть библиотеку по ссылке из разбора; seq пересоздаёт раздел на новом месте
   const [libraryAt, setLibraryAt] = useState<(OpenAt & { seq: number }) | null>(null);
+
+  // место в «Настройках», куда встают настройки занятий и прогресса
+  const [progressSlot, setProgressSlot] = useState<HTMLElement | null>(null);
 
   const go = (id: SectionId) => {
     setSection(id);
@@ -72,6 +77,7 @@ export default function App({ platform }: { platform: Platform }) {
           {pane('exam', <ExamView library={platform.library} openExternal={platform.openExternal} />)}
           {pane('cards', <CardsView />)}
           {pane('progress', <ProgressView onTrain={train} />)}
+          {progressSlot && createPortal(<ProgressSettings platform={platform} />, progressSlot)}
         </AppDataProvider>
         {pane(
           'library',
@@ -82,7 +88,7 @@ export default function App({ platform }: { platform: Platform }) {
             openAt={libraryAt ?? undefined}
           />,
         )}
-        {pane('settings', <SettingsView platform={platform} />)}
+        {pane('settings', <SettingsView platform={platform} progressSlot={setProgressSlot} />)}
       </main>
     </div>
   );

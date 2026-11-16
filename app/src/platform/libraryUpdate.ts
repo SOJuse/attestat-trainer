@@ -9,6 +9,8 @@ export type PackManifest = {
   schemaVersion: number;
   packVersion: string;
   library: { file: string; sha256: string; signature: string; bytes: number; docs: number };
+  /** база заданий; в манифестах до третьего этапа блока нет */
+  tasks?: { file: string; sha256: string; signature: string; bytes: number; count: number };
 };
 
 type Fetch = (url: string, init: { cache: 'no-store' }) => Promise<Response>;
@@ -45,12 +47,23 @@ function isManifest(x: unknown): x is PackManifest {
     m.library.signature.length > 0 &&
     Number.isInteger(m.library.bytes) &&
     m.library.bytes > 0 &&
-    Number.isInteger(m.library.docs)
+    Number.isInteger(m.library.docs) &&
+    (m.tasks === undefined ||
+      (typeof m.tasks === 'object' &&
+        m.tasks !== null &&
+        typeof m.tasks.file === 'string' &&
+        FILE.test(m.tasks.file) &&
+        typeof m.tasks.sha256 === 'string' &&
+        SHA256.test(m.tasks.sha256) &&
+        typeof m.tasks.signature === 'string' &&
+        m.tasks.signature.length > 0 &&
+        Number.isInteger(m.tasks.bytes) &&
+        m.tasks.bytes > 0))
   );
 }
 
 /** Версии вида 2026.11.20.3 сравниваются по частям как числа. */
-function isNewer(candidate: string, installed: string): boolean {
+export function isNewer(candidate: string, installed: string): boolean {
   const a = candidate.split('.').map(Number);
   const b = installed.split('.').map(Number);
   for (let i = 0; i < 4; i++) {
@@ -81,7 +94,7 @@ export async function fetchManifest(fetchImpl: Fetch): Promise<PackManifest> {
   return body;
 }
 
-async function download(
+export async function download(
   fetchImpl: Fetch,
   url: string,
   expectedBytes: number,

@@ -32,6 +32,7 @@ it('открывает настройки по кнопке внизу пане�
   await userEvent.click(screen.getByRole('button', { name: 'Настройки' }));
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Настройки');
   expect(await screen.findByText('Версия программы: 0.1.0')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Сохранить прогресс в файл' })).toBeInTheDocument();
 });
 
 describe('App: библиотека', () => {

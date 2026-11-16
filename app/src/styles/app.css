@@ -171,6 +171,25 @@ button {
   min-height: 24px;
 }
 
+.settings__field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings__field .number__field {
+  width: 5em;
+}
+
+.settings__hint {
+  color: var(--bad-text);
+}
+
+.settings__word {
+  display: block;
+  margin-bottom: 12px;
+}
+
 .settings__check .update {
   padding: 10px 16px;
   border: 1px solid var(--line);

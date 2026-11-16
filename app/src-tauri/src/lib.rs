@@ -1,3 +1,4 @@
+mod content;
 mod library;
 mod store;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -6,6 +7,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             library::commands::library_status,
             library::commands::library_install,
@@ -13,8 +15,12 @@ pub fn run() {
             library::commands::library_doc,
             library::commands::library_sections,
             library::commands::library_search,
+            content::commands::content_read,
+            content::commands::content_install,
             store::commands::store_load,
             store::commands::store_save,
+            store::commands::file_save,
+            store::commands::file_pick,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
