@@ -349,6 +349,7 @@ modules:
         - st-5
         - st-6
         - st-7
+        - st-11-1
         - st-13
         - st-15
       - doc: prikaz-1089n
