@@ -131,6 +131,7 @@ modules:
         - pril-1-p-26
         - pril-1-p-27
         - pril-1-p-36
+        - pril-1-p-37
     - id: otpuska
       title: Отпуска
       why: Как составить график отпусков и соблюсти очередность, предоставить удлинённый, длительный, учебный и
@@ -141,6 +142,7 @@ modules:
         - st-114
         - st-115
         - st-119
+        - st-120
         - st-121
         - st-122
         - st-123
@@ -239,6 +241,7 @@ modules:
         - st-79
         - st-80
         - st-81
+        - st-82
         - st-84
         - st-84-1
         - st-127
@@ -247,6 +250,7 @@ modules:
         - st-179
         - st-180
         - st-261
+        - st-280
         - st-336
         - st-373
         - st-391
@@ -272,12 +276,15 @@ modules:
         - pril-1-p-10
         - pril-1-p-12
         - pril-1-p-15
+        - pril-1-p-16
         - pril-1-p-21
         - pril-1-p-22
         - pril-1-p-23
         - pril-1-p-24
         - pril-1-p-44
         - pril-1-p-45
+        - pril-1-p-48
+        - pril-1-p-56
       - doc: tk-rf
         anchors:
         - st-81
@@ -294,10 +301,12 @@ modules:
         anchors:
         - st-214
         - st-216
+        - st-216-1
         - st-217
         - st-218
         - st-219
         - st-223
+        - st-226
         - st-227
         - st-228
         - st-228-1
@@ -333,6 +342,7 @@ modules:
         - st-81
         - st-92
         - st-121
+        - st-166
         - st-183
         - st-254
         - st-255
@@ -351,6 +361,7 @@ modules:
         - st-7
         - st-11-1
         - st-13
+        - st-14-1
         - st-15
       - doc: prikaz-1089n
         anchors:
@@ -380,12 +391,14 @@ modules:
         - st-90
       - doc: fz-152
         anchors:
+        - st-3
         - st-6
         - st-7
         - st-9
         - st-10
         - st-10-1
         - st-18-1
+        - st-20
         - st-22-1
       - doc: fz-125
         anchors:
