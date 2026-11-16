@@ -35,7 +35,7 @@ import time
 import yaml
 
 from ocr import ocr_pages
-from pub_text import html_paragraphs, pdf_paragraphs, squeeze, to_markdown, to_sections
+from pub_text import fix_misreadings, html_paragraphs, pdf_paragraphs, squeeze, to_markdown, to_sections
 
 BASE = "http://publication.pravo.gov.ru/"
 GOV = "http://government.ru/"
@@ -404,7 +404,7 @@ def fetch(entry):
         paras = pdf_paragraphs(got)
     elif status == "ocr":
         texts, total, low = got
-        paras = pdf_paragraphs(texts)
+        paras = fix_misreadings(pdf_paragraphs(texts))
         ocr_stat = f"слов {total}, под сомнением {low} ({low / max(total, 1):.1%})"
         note, text_from = f"{OCR_NOTE} При распознавании: {ocr_stat}.", "ocr"
     elif entry["kind"] == "government":
@@ -487,6 +487,7 @@ def main():
     a.add_argument("--report", default="")
     for cmd in (f, a):
         cmd.add_argument("--ocr", action="store_true", help="распознавать сканы без текстового слоя")
+    a.add_argument("--force", action="store_true", help="вместе с --ids: перекачать уже собранные документы")
     args = ap.parse_args()
 
     global OCR
@@ -514,7 +515,7 @@ def main():
             continue
         if only_ids and entry["id"] not in only_ids:
             continue
-        if (ROOT / entry["id"] / "meta.yaml").exists():
+        if (ROOT / entry["id"] / "meta.yaml").exists() and not (args.force and only_ids):
             continue
         if args.limit and done >= args.limit:
             break

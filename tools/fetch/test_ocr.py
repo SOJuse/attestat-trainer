@@ -39,6 +39,16 @@ class PageLines(unittest.TestCase):
         ]
         self.assertEqual([t.strip() for t, _ in page_lines(rows)], ["Москва"])
 
+    def test_short_russian_line_with_low_confidence_is_kept(self):
+        # последняя строка абзаца из одного слова со сноской: уверенность низкая, но это текст нормы
+        rows = [
+            word("за", 200, 100, line=1), word("итоговое", 280, 100, line=1), word("сочинение", 480, 100, line=1),
+            word("(изложение)", 200, 160, conf=12, line=2),
+        ]
+        lines = page_lines(rows)
+        self.assertEqual([t.strip() for t, _ in lines], ["за итоговое сочинение", "(изложение)"])
+        self.assertEqual(lines[1][1], ["(изложение)"])
+
     def test_one_doubtful_word_does_not_remove_a_good_line(self):
         rows = [word("образовательным", 200, 100, conf=54), word("программам", 560, 100), word("дошкольного", 800, 100)]
         lines = page_lines(rows)

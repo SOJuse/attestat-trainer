@@ -26,9 +26,15 @@ import re
 
 POINT = re.compile(r"^(\d{1,3})\.(?!\d)\s*\S")
 STAMP = re.compile(r"^(УТВЕРЖДЕН[АЫО]?|Утвержден[аыо]?|ПРИЛОЖЕНИЕ|Приложение)(\s|$)")
+# гриф с номером («Приложение № 2 к приказу») открывает новое приложение даже сразу после другого грифа
+STAMP_NUMBERED = re.compile(r"^(ПРИЛОЖЕНИЕ|Приложение)\s*(№|N)?\s*\d")
 SECTION_TITLE = re.compile(r"^([IVXLC]+\.\s|Глава\s|ГЛАВА\s|Раздел\s|РАЗДЕЛ\s)")
 LIST_START = re.compile(r"^(\d+(\.\d+)*\.(\s|$)|\d+(\.\d+)*\)\s|[а-яё]\)\s|[–—•]\s|\d+\.\d+(\.\d+)*\s)")
 PAGE_NUMBER = re.compile(r"^[-–—]?\s*\d{1,4}\s*[-–—]?$")
+# колонтитул с шифром документа внизу страницы скана: «Порядок - 03», «©б утверждении Порядка — 03»
+DOC_FOOTER = re.compile(r"^[©@]?\s*[А-ЯЁа-яё][А-ЯЁа-яё ]{2,45}\s[-–—]\s?\d{2}$")
+# сколько номеров пунктов можно перескочить, если номер не распознался
+MAX_POINT_GAP = 3
 NAME_AT_END = re.compile(r"(^|\s)([А-ЯЁ]\.\s?){1,2}[А-ЯЁ][а-яё]+(-[А-ЯЁ][а-яё]+)?$")
 NAME = re.compile(r"^([А-ЯЁ]\.\s?){1,2}[А-ЯЁ][а-яё]+(-[А-ЯЁ][а-яё]+)?$|^[А-ЯЁ][а-яё]+\s([А-ЯЁ]\.\s?){1,2}$")
 POSITION = re.compile(
@@ -82,6 +88,9 @@ def _furniture(pages):
             text = lines[i].strip()
             if PAGE_NUMBER.match(text) or re.match(r"^(Страница|стр\.)\s*\d+(\s*из\s*\d+)?$", text, re.I):
                 drop.add((pi, i))
+        for i in filled:
+            if DOC_FOOTER.match(lines[i].strip()):
+                drop.add((pi, i))
         for i in {filled[0], filled[-1]}:
             edges[re.sub(r"\d+", "#", squeeze(lines[i]))].append((pi, i))
     pages_with_text = sum(1 for lines in pages if any(s.strip() for s in lines))
@@ -116,7 +125,8 @@ def _kind(line, left, right):
         if NAME.match(last) and len(head) < 60:
             return "sign"
         return "row"
-    if lead >= 6 and tail >= 6 and abs(lead - tail) <= max(4, lead // 4):
+    starts_item = bool(POINT.match(text) or LIST_START.match(text))
+    if lead >= 6 and tail >= 6 and abs(lead - tail) <= max(4, lead // 4) and not (starts_item and lead <= 8):
         return "center"
     if lead >= (right - left) * 0.35:
         return "right"
@@ -237,6 +247,27 @@ def pdf_paragraphs(pages):
     return out
 
 
+LETTER_ITEM = re.compile(r"^([а-яё])\)\s")
+
+
+def fix_misreadings(paras):
+    """Правит ошибки распознавания, которые однозначно видны по соседям.
+
+    «6)» вместо «б)» сразу после подпункта «а)»; «м?» вместо «м²»; значок © на месте буквы «о».
+    Числа и слова не трогаются: их сверяют со сканом.
+    """
+    out, prev_letter = [], ""
+    for kind, text in paras:
+        if prev_letter == "а" and text.startswith("6) "):
+            text = "б" + text[1:]
+        m = LETTER_ITEM.match(text)
+        prev_letter = m.group(1) if m else ("" if re.match(r"^\d+[.)]\s", text) else prev_letter)
+        text = re.sub(r"(\d\s?)м\?(?=\s|$|[,.;)])", r"\1м²", text)
+        text = re.sub(r"(?<=[а-яё,] )©(?= [а-яё])", "о", text)
+        out.append((kind, text))
+    return out
+
+
 # ---------- HTML government.ru ----------
 
 
@@ -346,36 +377,67 @@ def to_sections(paras):
     signed = False
 
     def open_annex(first_para, heading=""):
+        last = b.sections[-1]
+        only_stamp = annex_open_only_with_stamp(last)
+        if first_para and only_stamp and not STAMP_NUMBERED.match(first_para):
+            # «Приложение» и следом «УТВЕРЖДЕН приказом…» — гриф одного приложения
+            last[2].append(first_para)
+            st["title_open"] = True
+            return
         st.update(annex=st["annex"] + 1, title=heading, title_open=True, point=0, context="", fresh=False, untitled=0)
         b.add(f"pril-{st['annex']}", heading or f"Приложение {st['annex']}")
         if first_para:
             b.body.append(first_para)
 
+    def annex_open_only_with_stamp(section):
+        return (
+            section[0] == f"pril-{st['annex']}" and st["annex"] > 0 and st["title_open"]
+            and len(section[2]) == 1 and not st["title"] and STAMP.match(section[2][0]) is not None
+        )
+
+    def flush_title():
+        """Название, под которым так и не начался пункт, остаётся в тексте абзацем."""
+        if st["fresh"]:
+            b.body.append(st["context"])
+            st["fresh"] = False
+
     for kind, text in paras:
         annex = st["annex"]
         if kind == "stamp":
+            flush_title()
             open_annex(text)
             continue
         if kind == "sign" and not annex:
+            flush_title()
             if not signed:
                 b.add("podpis", "Подпись и реквизиты")
                 signed = True
             b.body.append(text)
             continue
-        if kind == "title" and annex and st["title_open"] and not SECTION_TITLE.match(text):
-            st["title"] = (st["title"] + " " + text).strip()
-            b.sections[-1][1] = st["title"]
-            continue
-        if kind == "title" and signed and not annex:
-            # приложение без грифа: после подписи сразу идёт название («ПОРЯДОК …»)
-            open_annex("", text)
-            continue
+        m = POINT.match(text) if kind in ("", "title") else None
+        number = int(m.group(1)) if m else 0
+        is_point = (
+            bool(m)
+            and st["point"] < number <= st["point"] + MAX_POINT_GAP
+            and not (signed and not annex)
+            # пропуск номера допустим только когда нумерация уже идёт
+            and (number == st["point"] + 1 or st["point"] > 0)
+        )
+        if kind == "title" and not is_point:
+            if annex and st["title_open"] and not SECTION_TITLE.match(text):
+                st["title"] = (st["title"] + " " + text).strip()
+                b.sections[-1][1] = st["title"]
+                continue
+            if signed and not annex:
+                # приложение без грифа: после подписи сразу идёт название («ПОРЯДОК …»)
+                open_annex("", text)
+                continue
+            st["title_open"] = False
+            if annex or b.last != "preambula":
+                flush_title()
+                st["context"], st["fresh"] = text, True
+                continue
         st["title_open"] = False
-        if kind == "title" and (annex or b.last != "preambula"):
-            st["context"], st["fresh"] = text, True
-            continue
-        m = POINT.match(text) if kind == "" else None
-        is_point = bool(m) and int(m.group(1)) == st["point"] + 1 and not (signed and not annex)
         if st["fresh"] and not is_point:
             # под новым названием идёт текст без номера: это отдельный раздел, а не хвост прошлого пункта
             st["untitled"] += 1
@@ -383,7 +445,7 @@ def to_sections(paras):
             b.add(f"{prefix}razdel-{st['untitled']}", st["context"])
         st["fresh"] = False
         if is_point:
-            st["point"] += 1
+            st["point"] = number
             n = st["point"]
             if annex:
                 suffix = f". {st['title']}" if st["title"] else f" приложения {annex}"
@@ -391,6 +453,7 @@ def to_sections(paras):
             else:
                 b.add(f"p-{n}", f"Пункт {n}", st["context"])
         b.body.append(text)
+    flush_title()
     return [s for s in b.sections if s[2]]
 
 

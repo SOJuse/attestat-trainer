@@ -357,5 +357,99 @@ class GovHtml(unittest.TestCase):
         self.assertEqual(paras, [("", "Статьи 3, 4 и 5 (в части сроков) применяются.")])
 
 
+class RecognisedScans(unittest.TestCase):
+    """Огрехи, найденные сверкой распознанных текстов со сканами."""
+
+    def test_paragraph_start_is_never_taken_for_a_centred_title(self):
+        # в распознанном тексте длина строки в знаках не равна её ширине, и короткая
+        # первая строка пункта выглядит «по центру»
+        page = "\n".join(
+            [
+                I("52. Экзамены проводятся по расписанию, утверждённому на текущий год."),
+                " " * 6 + "53. Перерыв между проведением экзаменов по обязательным",
+                J("учебным предметам, сроки проведения которых установлены в соответствии с"),
+                L("пунктом 51 настоящего Порядка, составляет не менее двух дней."),
+            ]
+        )
+        paras = pdf_paragraphs([page])
+        self.assertEqual([k for k, _ in paras], ["", ""])
+        self.assertTrue(paras[1][1].startswith("53. Перерыв между проведением экзаменов по обязательным учебным"))
+
+    def test_titles_in_a_row_are_all_kept(self):
+        paras = [
+            ("", "1. Первый пункт."),
+            ("title", "ЕГЭ по учебному предмету «Математика» проводится по двум уровням:"),
+            ("title", "II. Формы проведения"),
+            ("", "2. Второй пункт."),
+        ]
+        sections = to_sections(paras)
+        text = to_markdown(sections)[0]
+        self.assertIn("ЕГЭ по учебному предмету «Математика» проводится по двум уровням:", text)
+        self.assertIn("II. Формы проведения", text)
+
+    def test_numbering_recovers_after_a_missed_point(self):
+        paras = [("", f"{n}. Пункт номер {n}.") for n in (1, 2, 3)]
+        paras += [("", "текст, в котором номер четвёртого пункта не распознался.")]
+        paras += [("", f"{n}. Пункт номер {n}.") for n in (5, 6, 7)]
+        anchors = [s[0] for s in to_sections(paras)]
+        self.assertEqual(anchors, ["p-1", "p-2", "p-3", "p-5", "p-6", "p-7"])
+
+    def test_a_far_number_inside_text_does_not_start_a_point(self):
+        paras = [("", "1. Первый."), ("", "2. Второй."), ("", "2012. год принятия закона упомянут в тексте."),
+                 ("", "40. Ссылка на далёкий пункт."), ("", "3. Третий.")]
+        self.assertEqual([s[0] for s in to_sections(paras)], ["p-1", "p-2", "p-3"])
+
+    def test_point_recognised_as_title_is_still_a_point(self):
+        paras = [("", "1. Первый."), ("title", "2. Второй, строка которого встала по центру"), ("", "3. Третий.")]
+        self.assertEqual([s[0] for s in to_sections(paras)], ["p-1", "p-2", "p-3"])
+
+    def test_word_prilozhenie_and_stamp_make_one_annex(self):
+        paras = [
+            ("", "1. Утвердить прилагаемый Порядок."), ("sign", "Министр С.С. Кравцов"),
+            ("stamp", "Приложение"), ("stamp", "УТВЕРЖДЕН приказом Министерства просвещения от 31 июля 2020 г. № 373"),
+            ("title", "Порядок организации образовательной деятельности"),
+            ("", "1. Порядок регулирует."), ("", "2. Формы получения образования."),
+        ]
+        anchors = [s[0] for s in to_sections(paras)]
+        self.assertEqual(anchors, ["p-1", "podpis", "pril-1", "pril-1-p-1", "pril-1-p-2"])
+        annex = to_sections(paras)[2]
+        self.assertEqual(annex[2][:2], ["Приложение", "УТВЕРЖДЕН приказом Министерства просвещения от 31 июля 2020 г. № 373"])
+
+    def test_two_real_annexes_stay_separate(self):
+        paras = [
+            ("", "1. Утвердить."), ("sign", "Министр С.С. Кравцов"),
+            ("stamp", "Приложение № 1 к приказу"), ("title", "Перечень"), ("", "1. Первое."),
+            ("stamp", "Приложение № 2 к приказу"), ("title", "Порядок"), ("", "1. Второе."),
+        ]
+        self.assertEqual(
+            [s[0] for s in to_sections(paras)],
+            ["p-1", "podpis", "pril-1", "pril-1-p-1", "pril-2", "pril-2-p-1"],
+        )
+
+    def test_running_footer_with_document_code_is_removed(self):
+        pages = [
+            "\n".join([I("1. Первый пункт приказа с достаточно длинным текстом для геометрии строк."),
+                       J("продолжение первого пункта приказа на второй строке абзаца, выключка по"),
+                       L("ширине."), "Порядок - 03"]),
+            "\n".join([J("учителя-дефектолога, учителя-логопеда и педагога-психолога, которые входят в"),
+                       "©б утверждении Порядка — 03",
+                       L("штат организации.")]),
+        ]
+        text = " ".join(t for _, t in pdf_paragraphs(pages))
+        self.assertNotIn("03", text)
+        self.assertIn("которые входят в штат организации.", text)
+
+    def test_typical_misreadings_are_corrected(self):
+        from pub_text import fix_misreadings
+
+        paras = [("", "а) первое;"), ("", "6) второе;"), ("", "в) третье;"), ("", "площадью 2,5 м? на ребёнка"),
+                 ("", "5) пятое;"), ("", "6) шестое;"), ("", "дополнить © абзацем следующего содержания")]
+        self.assertEqual(
+            [t for _, t in fix_misreadings(paras)],
+            ["а) первое;", "б) второе;", "в) третье;", "площадью 2,5 м² на ребёнка", "5) пятое;", "6) шестое;",
+             "дополнить о абзацем следующего содержания"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
