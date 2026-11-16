@@ -6,7 +6,7 @@
         "id": "tk-rf", "title": "Трудовой кодекс Российской Федерации", "short": "ТК РФ", "kind": "federal-law",
         "number": "197-ФЗ", "date": "2001-12-30", "edition": "2026-09-01",
         "sourceUrl": "http://actual.pravo.gov.ru/", "fetched": "2026-11-16",
-        "modules": ["K", "R", "P", "I"], "textStatus": "full", "note": null, "listNo": 8
+        "modules": ["K", "R", "P", "I"], "textStatus": "full", "note": null, "listNo": 8, "editionStatus": "current", "amendedBy": []
       },
       "sections": [
         { "anchor": "st-255", "heading": "Статья 255. Отпуска по беременности и родам", "text": "Женщинам по их заявлению и на основании выданного в установленном порядке листка нетрудоспособности предоставляются отпуска по беременности и родам." },
@@ -19,7 +19,7 @@
         "id": "fz-273", "title": "Об образовании в Российской Федерации", "short": "273-ФЗ", "kind": "federal-law",
         "number": "273-ФЗ", "date": "2012-12-29", "edition": "2026-09-01",
         "sourceUrl": "http://actual.pravo.gov.ru/", "fetched": "2026-11-16",
-        "modules": ["K", "R", "P", "Rez", "I"], "textStatus": "full", "note": null, "listNo": 14
+        "modules": ["K", "R", "P", "Rez", "I"], "textStatus": "full", "note": null, "listNo": 14, "editionStatus": "current", "amendedBy": []
       },
       "sections": [
         { "anchor": "st-47", "heading": "Статья 47. Правовой статус педагогических работников", "text": "Педагогические работники имеют право на ежегодный основной удлиненный оплачиваемый отпуск, продолжительность которого определяется Правительством Российской Федерации." }
@@ -29,7 +29,7 @@
       "info": {
         "id": "lit-242", "title": "Письмо заместителя руководителя ДОНМ", "short": null, "kind": "letter",
         "number": "Исх-3499/25", "date": "2025-02-07", "edition": null, "sourceUrl": null, "fetched": null,
-        "modules": [], "textStatus": "missing", "note": "Текст в официальных источниках не найден.", "listNo": 242
+        "modules": [], "textStatus": "missing", "note": "Текст в официальных источниках не найден.", "listNo": 242, "editionStatus": "current", "amendedBy": []
       },
       "sections": []
     }

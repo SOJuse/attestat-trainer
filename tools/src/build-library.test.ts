@@ -84,6 +84,15 @@ describe('buildLibrary', () => {
     expect(validateCorpus('src/fixtures/ocr-empty').errors.join(' ')).toMatch(/text\.md нет/);
   });
 
+  it('вид редакции и изменившие акты попадают в базу', () => {
+    const rows = db.prepare('SELECT id, edition_status, amended_by FROM docs ORDER BY id').all();
+    expect(rows).toEqual([
+      { id: 'fz-273', edition_status: 'original', amended_by: 'приказ от 01.02.2024 № 62\nприказ от 03.03.2026 № 137' },
+      { id: 'lit-9', edition_status: 'current', amended_by: '' },
+      { id: 'tk-rf', edition_status: 'current', amended_by: '' },
+    ]);
+  });
+
   it('манифест описывает именно этот файл', () => {
     const gz = readFileSync(join(out, 'library.sqlite.gz'));
     expect(manifest.schemaVersion).toBe(1);

@@ -8,4 +8,8 @@ source_url: http://actual.pravo.gov.ru/text.html#hash=def
 fetched: '2026-11-16'
 modules: [P]
 list_no: 14
+edition_status: original
+amended_by:
+  - приказ от 01.02.2024 № 62
+  - приказ от 03.03.2026 № 137
 text: full

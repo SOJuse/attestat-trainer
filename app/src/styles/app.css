@@ -354,6 +354,19 @@ button {
   background: var(--softer);
 }
 
+.reader__absent p {
+  margin: 0 0 6px;
+}
+
+.reader__absent ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.reader__absent + .reader__absent {
+  margin-top: 8px;
+}
+
 .reader__more {
   margin: 8px 0 24px;
 }

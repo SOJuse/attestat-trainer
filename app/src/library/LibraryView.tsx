@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ModuleCode } from '../core/modules';
 import type { LibraryStore } from '../platform/Library';
 import { DocBrowser } from './DocBrowser';
 import { InstallState } from './InstallState';
@@ -20,6 +21,9 @@ type Props = {
 export function LibraryView({ library, openExternal, openAt }: Props) {
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [open, setOpen] = useState<OpenAt | null>(openAt ?? null);
+  // запрос и фильтр хранятся здесь: человек открывает находку, возвращается и идёт к следующей
+  const [query, setQuery] = useState('');
+  const [module, setModule] = useState<ModuleCode | null>(null);
 
   const refresh = useCallback(
     () =>
@@ -47,5 +51,14 @@ export function LibraryView({ library, openExternal, openAt }: Props) {
       />
     );
   }
-  return <DocBrowser library={library} onOpen={(docId, anchor) => setOpen({ docId, anchor })} />;
+  return (
+    <DocBrowser
+      library={library}
+      query={query}
+      onQuery={setQuery}
+      module={module}
+      onModule={setModule}
+      onOpen={(docId, anchor) => setOpen({ docId, anchor })}
+    />
+  );
 }

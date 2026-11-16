@@ -33,6 +33,10 @@ export type DocInfo = {
   textStatus: TextStatus;
   note: string | null;
   listNo: number | null;
+  /** original — текст на дату принятия, позднейшие изменения в него не внесены. */
+  editionStatus: 'current' | 'original';
+  /** Акты, изменившие документ после редакции, которая лежит в библиотеке. */
+  amendedBy: string[];
 };
 
 export type SectionHead = { anchor: string; heading: string; ord: number };

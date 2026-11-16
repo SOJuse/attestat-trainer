@@ -19,6 +19,8 @@ const info = (over: Partial<DocInfo>): DocInfo => ({
   textStatus: 'full',
   note: null,
   listNo: 8,
+  editionStatus: 'current',
+  amendedBy: [],
   ...over,
 });
 
@@ -149,6 +151,26 @@ describe('LibraryView: список и поиск', () => {
     expect(await screen.findByText('Текст статьи 2.')).toBeInTheDocument();
   });
 
+  it('после возврата из читалки поиск и фильтр остаются как были', async () => {
+    const search = vi.fn(async () => [
+      { docId: 'tk-rf', docTitle: 'Трудовой кодекс Российской Федерации', anchor: 'st-2', heading: 'Статья 2. Заголовок', snippet: '…отпуск…' },
+    ]);
+    render(<LibraryView library={library({ search })} openExternal={async () => {}} />);
+    await userEvent.type(await screen.findByRole('searchbox'), 'отпуск');
+    await userEvent.click(await screen.findByRole('button', { name: /Статья 2\. Заголовок/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'К списку' }));
+    expect(screen.getByRole('searchbox')).toHaveValue('отпуск');
+    expect(await screen.findByRole('button', { name: /Статья 2\. Заголовок/ })).toBeInTheDocument();
+  });
+
+  it('фильтр по модулю тоже переживает возврат из читалки', async () => {
+    render(<LibraryView library={library()} openExternal={async () => {}} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Процессы' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Об образовании/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'К списку' }));
+    expect(screen.getByRole('button', { name: 'Процессы' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('пустой результат подсказывает, что попробовать', async () => {
     render(<LibraryView library={library({ search: async () => [] })} openExternal={async () => {}} />);
     await userEvent.type(await screen.findByRole('searchbox'), 'абракадабра');
@@ -226,6 +248,54 @@ describe('LibraryView: чтение', () => {
     expect(screen.getByText(/сверяйте с источником/)).toBeInTheDocument();
     expect(await screen.findByText('Текст статьи 1.')).toBeInTheDocument();
     expect(screen.queryByText(/Текста этого документа в библиотеке нет/)).not.toBeInTheDocument();
+  });
+
+  it('переход к разделу, с которого документ открыт, не оставляет страницу пустой', async () => {
+    const lib = library({}, 100);
+    render(<LibraryView library={lib} openExternal={async () => {}} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Трудовой кодекс/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Показать дальше' }));
+    expect(await screen.findByText('Текст статьи 60.')).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Перейти к разделу' }), 'st-1');
+    expect(await screen.findByText('Текст статьи 1.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Текст статьи 60.')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Показать дальше' })).toBeInTheDocument();
+  });
+
+  it('двойной щелчок по «Показать дальше» не дублирует разделы', async () => {
+    const lib = library({}, 100);
+    render(<LibraryView library={lib} openExternal={async () => {}} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Трудовой кодекс/ }));
+    const more = await screen.findByRole('button', { name: 'Показать дальше' });
+    await userEvent.dblClick(more);
+    await screen.findByText('Текст статьи 60.');
+    expect(screen.getAllByText('Текст статьи 31.')).toHaveLength(1);
+  });
+
+  it('у текста в исходной редакции сказано, что изменения не внесены, и названы изменившие акты', async () => {
+    const original = info({
+      id: 'prikaz-373', title: 'Порядок дошкольного образования', short: null, listNo: 100,
+      editionStatus: 'original', edition: '2020-07-31',
+      amendedBy: ['приказ Минпросвещения России от 01.12.2022 № 1048', 'приказ Минпросвещения России от 29.09.2023 № 731'],
+    });
+    const lib = library({
+      list: async () => [original],
+      doc: async () => ({ info: original, sections: [{ anchor: 'st-1', heading: 'Статья 1. Заголовок', ord: 0 }] }),
+    });
+    render(<LibraryView library={lib} openExternal={async () => {}} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Порядок дошкольного образования/ }));
+    expect(await screen.findByText(/Позднейшие изменения в текст не внесены/)).toBeInTheDocument();
+    expect(screen.getByText(/от 01\.12\.2022 № 1048/)).toBeInTheDocument();
+    expect(screen.getByText(/В редакции на 31\.07\.2020/)).toBeInTheDocument();
+    expect(screen.queryByText(/Редакция от/)).not.toBeInTheDocument();
+  });
+
+  it('сбой при открытии источника не роняет читалку', async () => {
+    const openExternal = vi.fn(async () => Promise.reject(new Error('forbidden')));
+    render(<LibraryView library={library()} openExternal={openExternal} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Трудовой кодекс/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Открыть источник' }));
+    expect(await screen.findByText(/Не удалось открыть источник/)).toBeInTheDocument();
   });
 
   it('документ без текста объясняет, почему его нет', async () => {

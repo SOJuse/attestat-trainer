@@ -23,12 +23,29 @@ export function Reader(props: Props) {
 function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
   const [doc, setDoc] = useState<Loaded | null>(null);
   const [failed, setFailed] = useState(false);
-  const [from, setFrom] = useState(0);
   const [sections, setSections] = useState<SectionBody[]>([]);
-  const [target, setTarget] = useState(anchor ?? '');
+  const [target, setTarget] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [sourceFailed, setSourceFailed] = useState(false);
   const top = useRef<HTMLDivElement>(null);
+  // номер последнего перехода: ответ на устаревший запрос отбрасывается
+  const turn = useRef(0);
 
-  // документ и его оглавление
+  /** Показать документ с раздела `ord`: всё загруженное раньше заменяется. */
+  function showFrom(ord: number) {
+    const mine = ++turn.current;
+    setBusy(true);
+    library
+      .sections(docId, ord, PAGE)
+      .then((page) => {
+        if (mine !== turn.current) return;
+        setSections(page);
+        top.current?.scrollIntoView?.();
+      })
+      .catch(() => mine === turn.current && setFailed(true))
+      .finally(() => mine === turn.current && setBusy(false));
+  }
+
   useEffect(() => {
     let alive = true;
     library
@@ -38,26 +55,16 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
         const start = toc.find((s) => s.anchor === anchor)?.ord ?? 0;
         setDoc({ info, toc });
         setTarget(anchor && start > 0 ? anchor : '');
-        setFrom(start);
+        if (toc.length > 0) showFrom(start);
       })
       .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
+      turn.current += 1;
     };
-  }, [library, docId, anchor]);
-
-  // первая порция текста от выбранного места
-  useEffect(() => {
-    if (!doc || doc.toc.length === 0) return;
-    let alive = true;
-    library
-      .sections(docId, from, PAGE)
-      .then((page) => alive && setSections(page))
-      .catch(() => alive && setFailed(true));
-    return () => {
-      alive = false;
-    };
-  }, [library, docId, doc, from]);
+    // читалка пересоздаётся при смене документа и места, поэтому эффект нужен один раз
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (failed) {
     return (
@@ -70,28 +77,38 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
   if (!doc) return <section className="view" aria-busy="true" />;
 
   const { info, toc } = doc;
-  const first = sections[0]?.ord ?? from;
-  const next = sections.length ? sections[sections.length - 1].ord + 1 : from;
+  const first = sections[0]?.ord ?? 0;
+  const next = sections.length ? sections[sections.length - 1].ord + 1 : 0;
 
-  async function showMore() {
-    const page = await library.sections(docId, next, PAGE);
-    setSections((prev) => [...prev, ...page]);
-  }
-
-  async function showEarlier() {
-    const start = Math.max(0, first - PAGE);
-    const page = await library.sections(docId, start, first - start);
-    setSections((prev) => [...page, ...prev]);
+  /** Догрузить соседние разделы. Пока идёт один запрос, второй не начинается. */
+  function extend(fromOrd: number, count: number, where: 'before' | 'after') {
+    if (busy || count <= 0) return;
+    const mine = turn.current;
+    setBusy(true);
+    library
+      .sections(docId, fromOrd, count)
+      .then((page) => {
+        if (mine !== turn.current) return;
+        setSections((prev) => (where === 'after' ? [...prev, ...page] : [...page, ...prev]));
+      })
+      .catch(() => mine === turn.current && setFailed(true))
+      .finally(() => mine === turn.current && setBusy(false));
   }
 
   function jump(to: string) {
     const ord = toc.find((s) => s.anchor === to)?.ord;
     if (ord === undefined) return;
     setTarget(to);
-    setSections([]);
-    setFrom(ord);
-    top.current?.scrollIntoView?.();
+    showFrom(ord);
   }
+
+  function openSource(url: string) {
+    setSourceFailed(false);
+    openExternal(url).catch(() => setSourceFailed(true));
+  }
+
+  const hasText = info.textStatus === 'full' || info.textStatus === 'ocr';
+  const original = info.editionStatus === 'original';
 
   return (
     <section className="view reader">
@@ -99,7 +116,11 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
       <h1>{info.title}</h1>
       <p className="reader__meta muted">
         {[info.number && `№ ${info.number}`, info.date && `от ${formatDate(info.date)}`].filter(Boolean).join(' ')}
-        {info.edition && <span className="reader__edition">Редакция от {formatDate(info.edition)}</span>}
+        {info.edition && (
+          <span className="reader__edition">
+            {original ? `В редакции на ${formatDate(info.edition)}` : `Редакция от ${formatDate(info.edition)}`}
+          </span>
+        )}
         {info.fetched && <span>скачано {formatDate(info.fetched)}</span>}
       </p>
 
@@ -117,11 +138,14 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
           </select>
         )}
         {info.sourceUrl && (
-          <button type="button" className="button" onClick={() => openExternal(info.sourceUrl!)}>
+          <button type="button" className="button" onClick={() => openSource(info.sourceUrl!)}>
             Открыть источник
           </button>
         )}
       </div>
+      {sourceFailed && info.sourceUrl && (
+        <p className="reader__absent">Не удалось открыть источник. Его адрес: {info.sourceUrl}</p>
+      )}
 
       {info.textStatus === 'ocr' && (
         <p className="reader__absent">
@@ -129,16 +153,42 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
           и номерах пунктов: перед тем как на него опираться, сверяйте с источником.
         </p>
       )}
-      {info.textStatus !== 'full' && info.textStatus !== 'ocr' && (
+      {hasText && original && (
+        <div className="reader__absent">
+          <p>Это текст на дату принятия документа. Позднейшие изменения в текст не внесены.</p>
+          {info.amendedBy.length > 0 && (
+            <>
+              <p>Документ меняли:</p>
+              <ul>
+                {info.amendedBy.map((act) => (
+                  <li key={act}>{act}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+      {info.textStatus === 'missing' && (
         <p className="reader__absent">
-          Текста этого документа в библиотеке нет: в действующей редакции его не удалось получить из
-          официального источника.{info.note ? ` ${info.note}` : ''}
+          Текста этого документа в библиотеке нет: в открытых официальных источниках его получить не удалось.
+          {info.note ? ` ${info.note}` : ''}
+        </p>
+      )}
+      {info.textStatus === 'bibliographic' && (
+        <p className="reader__absent">
+          Текста этого документа в библиотеке нет: это не нормативный акт, в списке литературы он указан как
+          материал для подготовки.
         </p>
       )}
 
       <div ref={top} />
-      {first > 0 && (
-        <button type="button" className="button reader__more" onClick={showEarlier}>
+      {sections.length > 0 && first > 0 && (
+        <button
+          type="button"
+          className="button reader__more"
+          disabled={busy}
+          onClick={() => extend(Math.max(0, first - PAGE), first - Math.max(0, first - PAGE), 'before')}
+        >
           Показать предыдущие
         </button>
       )}
@@ -148,13 +198,13 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
             <p className="section__context">{s.context}</p>
           )}
           <h2>{s.heading}</h2>
-          {s.text.split(/\n{2,}/).map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
+          {s.text.split(/\n{2,}/).map((paragraph, k) => (
+            <p key={k}>{paragraph}</p>
           ))}
         </article>
       ))}
       {sections.length > 0 && next < toc.length && (
-        <button type="button" className="button reader__more" onClick={showMore}>
+        <button type="button" className="button reader__more" disabled={busy} onClick={() => extend(next, PAGE, 'after')}>
           Показать дальше
         </button>
       )}

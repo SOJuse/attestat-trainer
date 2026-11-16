@@ -7,14 +7,16 @@ const SEARCH_LIMIT = 50;
 
 type Props = {
   library: LibraryStore;
+  query: string;
+  onQuery: (query: string) => void;
+  module: ModuleCode | null;
+  onModule: (module: ModuleCode | null) => void;
   onOpen: (docId: string, anchor?: string) => void;
 };
 
-/** Список документов с фильтром по модулю и поиском по тексту. */
-export function DocBrowser({ library, onOpen }: Props) {
+/** Список документов с фильтром по модулю и поиском по тексту. Запрос и фильтр хранит родитель. */
+export function DocBrowser({ library, query, onQuery, module, onModule, onOpen }: Props) {
   const [docs, setDocs] = useState<DocInfo[]>([]);
-  const [module, setModule] = useState<ModuleCode | null>(null);
-  const [query, setQuery] = useState('');
   // результаты хранятся вместе с запросом, на который они получены
   const [found, setFound] = useState<{ query: string; hits: SearchHit[] } | null>(null);
 
@@ -57,7 +59,7 @@ export function DocBrowser({ library, onOpen }: Props) {
         aria-label="Поиск по документам"
         placeholder="Слово или фраза из текста, например «отпуск по уходу»"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => onQuery(e.target.value)}
       />
 
       {trimmed ? (
@@ -83,7 +85,7 @@ export function DocBrowser({ library, onOpen }: Props) {
       ) : (
         <>
           <div className="filter" role="group" aria-label="Модуль">
-            <button type="button" className="chip" aria-pressed={module === null} onClick={() => setModule(null)}>
+            <button type="button" className="chip" aria-pressed={module === null} onClick={() => onModule(null)}>
               Все
             </button>
             {MODULES.map((m) => (
@@ -92,7 +94,7 @@ export function DocBrowser({ library, onOpen }: Props) {
                 type="button"
                 className="chip"
                 aria-pressed={module === m.code}
-                onClick={() => setModule(m.code)}
+                onClick={() => onModule(m.code)}
               >
                 {m.title}
               </button>

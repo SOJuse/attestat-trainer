@@ -15,9 +15,9 @@ use sha2::{Digest, Sha256};
 
 const SCHEMA_VERSION: i64 = 1;
 
-/// Публичный ключ, которым подписаны пакеты базы. Тот же, что у обновлений программы
-/// (`plugins.updater.pubkey` в tauri.conf.json); совпадение проверяет тест конфигурации.
-pub const PACK_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERGNEI2ODMyMUYzREE2MUUKUldRZXBqMGZNbWhMMzVvRDB6SG56S2gzelkxanVQT2Jyc0hpcnUrMFE5Z25BWU1YdjhobWNESUIK";
+/// Публичный ключ, которым подписаны пакеты базы. Это отдельный ключ, не ключ обновлений программы:
+/// утечка ключа пакетов не даёт подписывать сами программы.
+pub const PACK_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA1MjNFMjUxNTRBRUFBMDMKUldRRHFxNVVVZUlqQmVmN2ZPSmxMZ1YyTDVWRFpLSVZCWFJIZmljamdDbC8zZUZuSFh4aWRvNWIK";
 const DB_FILE: &str = "library.sqlite";
 const INFO_FILE: &str = "library.json";
 const SNIPPET_CHARS: usize = 240;
@@ -74,6 +74,10 @@ pub struct DocInfo {
     pub text_status: String,
     pub note: Option<String>,
     pub list_no: Option<u32>,
+    /// current или original (текст на дату принятия, позднейшие изменения не внесены)
+    pub edition_status: String,
+    /// акты, изменившие документ после редакции из библиотеки
+    pub amended_by: Vec<String>,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -205,7 +209,7 @@ pub fn install(dir: &Path, gz: &[u8], sha256: &str, signature: &str, pubkey: &st
 }
 
 const DOC_COLUMNS: &str = "id, title, short, kind, number, date, edition, source_url, fetched, \
-                           modules, text_status, note, list_no";
+                           modules, text_status, note, list_no, edition_status, amended_by";
 
 fn doc_from_row(r: &rusqlite::Row) -> rusqlite::Result<DocInfo> {
     let modules: String = r.get(9)?;
@@ -223,6 +227,8 @@ fn doc_from_row(r: &rusqlite::Row) -> rusqlite::Result<DocInfo> {
         text_status: r.get(10)?,
         note: r.get(11)?,
         list_no: r.get(12)?,
+        edition_status: r.get(13)?,
+        amended_by: r.get::<_, String>(14)?.split('\n').filter(|a| !a.is_empty()).map(String::from).collect(),
     })
 }
 
@@ -352,7 +358,7 @@ mod tests {
     use super::*;
 
     const PACK: &[u8] = include_bytes!("../tests/fixtures/library.sqlite.gz");
-    const PACK_SHA: &str = "8fe6d3ce614fcf2fd954c58046c0b5b533b1433eb94ae7e0d88493fe08a4cdd1";
+    const PACK_SHA: &str = "79089602e8394b0b67b2c1cb4a842ebd87226d5f76e05abba561b9b10d59bff2";
     // подпись тестового пакета тестовым ключом; закрытой части ключа в репозитории нет
     const PACK_SIG: &str = include_str!("../tests/fixtures/library.sqlite.gz.sig");
     const TEST_KEY: &str = include_str!("../tests/fixtures/test-key.pub");
@@ -415,6 +421,18 @@ mod tests {
         assert!(!status(dir.path()).installed);
     }
 
+    /// Проверка перед выпуском: подпись, сделанная настоящим ключом пакетов, принимается зашитым ключом.
+    /// Запуск: PACK_FILE=…/library.sqlite.gz PACK_SIG_FILE=…/library.sqlite.gz.sig cargo test real_pack
+    #[test]
+    fn real_pack_key_matches_embedded_pubkey() {
+        let (Ok(pack), Ok(sig)) = (std::env::var("PACK_FILE"), std::env::var("PACK_SIG_FILE")) else {
+            return; // без файлов проверять нечего
+        };
+        let bytes = fs::read(pack).unwrap();
+        let signature = fs::read_to_string(sig).unwrap();
+        assert_eq!(verify_signature(&bytes, &signature, PACK_PUBKEY), Ok(()));
+    }
+
     #[test]
     fn malformed_signature_or_key_is_rejected() {
         let dir = tempfile::tempdir().unwrap();
@@ -456,6 +474,11 @@ mod tests {
         let d = doc(dir.path(), "tk-rf").unwrap();
         assert_eq!(d.info.modules, ["K", "R"]);
         assert_eq!(d.info.edition.as_deref(), Some("2026-09-01"));
+        assert_eq!(d.info.edition_status, "current");
+        assert!(d.info.amended_by.is_empty());
+        let scanned = doc(dir.path(), "fz-273").unwrap().info;
+        assert_eq!(scanned.edition_status, "original");
+        assert_eq!(scanned.amended_by, ["приказ от 01.02.2024 № 62", "приказ от 03.03.2026 № 137"]);
         let anchors: Vec<&str> = d.sections.iter().map(|s| s.anchor.as_str()).collect();
         assert_eq!(anchors, ["st-255", "st-256", "st-257"]);
         assert_eq!(doc(dir.path(), "no-such-doc"), Err(LibError::Query));

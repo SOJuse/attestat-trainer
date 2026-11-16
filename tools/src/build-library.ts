@@ -13,7 +13,8 @@ const SCHEMA = `
 CREATE TABLE docs (
   id TEXT PRIMARY KEY, title TEXT NOT NULL, short TEXT, kind TEXT NOT NULL,
   number TEXT, date TEXT, edition TEXT, source_url TEXT, fetched TEXT,
-  modules TEXT NOT NULL, text_status TEXT NOT NULL, note TEXT, list_no INTEGER
+  modules TEXT NOT NULL, text_status TEXT NOT NULL, note TEXT, list_no INTEGER,
+  edition_status TEXT NOT NULL DEFAULT 'current', amended_by TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE sections (
   rowid INTEGER PRIMARY KEY, doc_id TEXT NOT NULL REFERENCES docs(id),
@@ -42,7 +43,7 @@ export function buildLibrary({ root, out, build, date = new Date() }: BuildOptio
 
   const insertDoc = db.prepare(
     `INSERT INTO docs VALUES (@id, @title, @short, @kind, @number, @date, @edition, @source_url,
-       @fetched, @modules, @text_status, @note, @list_no)`,
+       @fetched, @modules, @text_status, @note, @list_no, @edition_status, @amended_by)`,
   );
   const insertSection = db.prepare(
     'INSERT INTO sections (rowid, doc_id, anchor, heading, ord, text, context) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -69,6 +70,9 @@ export function buildLibrary({ root, out, build, date = new Date() }: BuildOptio
         text_status: meta?.text ?? 'missing',
         note: meta?.note ?? null,
         list_no: entry.list_no ?? null,
+        edition_status: meta?.edition_status ?? 'current',
+        // по акту на строку
+        amended_by: (meta?.amended_by ?? []).join('\n'),
       });
       for (const s of doc?.sections ?? []) {
         rowid += 1;
