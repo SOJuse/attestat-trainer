@@ -17,6 +17,6 @@
 
   --radius: 8px;
   --sidebar-width: 208px;
-  --font-text: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-heading: var(--font-text);
+  --font-text: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 }

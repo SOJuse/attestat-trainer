@@ -91,6 +91,17 @@ button {
   overflow: hidden;
 }
 
+.pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pane[hidden] {
+  display: none;
+}
+
 .view {
   flex: 1;
   overflow-y: auto;
@@ -100,6 +111,7 @@ button {
 .view h1 {
   margin: 0 0 12px;
   font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 28px;
   line-height: 1.2;
 }
@@ -112,6 +124,7 @@ button {
 .view h2 {
   margin: 28px 0 8px;
   font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 18px;
 }
 

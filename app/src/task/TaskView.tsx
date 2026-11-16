@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { grade, isComplete, type Answer } from '../core/grade';
 import type { CaseStep, Task } from '../core/taskSchema';
+import { useActiveSection } from '../state/Active';
 import { emptyAnswer, shuffled, TaskInputs } from './TaskInputs';
 
 const ISSUES = 'https://github.com/SOJuse/attestat-trainer/issues/new';
@@ -60,6 +61,7 @@ export function TaskView({
   const [answer, setAnswer] = useState<Answer>(() => initialAnswer ?? emptyAnswer(task, order));
   const [result, setResult] = useState<boolean | null>(null);
   const reviewed = result !== null;
+  const active = useActiveSection();
   const taskId = id ?? task.id ?? '';
 
   const change = (next: Answer) => {
@@ -81,6 +83,7 @@ export function TaskView({
   });
 
   useEffect(() => {
+    if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing = el?.tagName === 'SELECT' || (el?.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text');
@@ -104,7 +107,7 @@ export function TaskView({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mode, order]);
+  }, [mode, order, active]);
 
   return (
     <section className="view task">
