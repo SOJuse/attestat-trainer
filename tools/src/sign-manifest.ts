@@ -13,6 +13,12 @@ export function addSignature(dir: string): void {
   const signature = existsSync(sigPath) ? readFileSync(sigPath, 'utf8').trim() : '';
   if (!signature) throw new Error(`нет подписи пакета: ${sigPath}`);
   manifest.library.signature = signature;
+  if (manifest.tasks) {
+    const tasksSig = join(dir, manifest.tasks.file + '.sig');
+    const tasksSignature = existsSync(tasksSig) ? readFileSync(tasksSig, 'utf8').trim() : '';
+    if (!tasksSignature) throw new Error(`нет подписи базы заданий: ${tasksSig}`);
+    manifest.tasks.signature = tasksSignature;
+  }
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 }
 

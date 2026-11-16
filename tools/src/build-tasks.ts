@@ -1,12 +1,21 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MODULE_CODES, TASKS_SCHEMA } from '../../app/src/core/taskSchema';
 import { loadTopics } from './corpus';
+import { Manifest } from './schema';
 import { loadTasks, type Raw } from './tasks';
 import { validateTasks } from './validate-tasks';
 
-export type BuildTasksOptions = { root: string; out: string; build: number; date?: Date; pilot: boolean };
+export type BuildTasksOptions = {
+  root: string;
+  out: string;
+  build: number;
+  date?: Date;
+  pilot: boolean;
+  /** версия пакета, если она уже задана манифестом библиотеки; иначе считается по дате и номеру сборки */
+  packVersion?: string;
+};
 export type TasksInfo = { file: string; sha256: string; bytes: number; count: number };
 
 const byId = (a: Raw, b: Raw) => String(a.id).localeCompare(String(b.id));
@@ -14,7 +23,7 @@ const without = (item: Raw, keys: string[]) =>
   Object.fromEntries(Object.entries(item).filter(([k]) => !keys.includes(k)));
 
 /** Собирает tasks.json. База с ошибками не собирается: сначала проходит validateTasks. */
-export function buildTasks({ root, out, build, date = new Date(), pilot }: BuildTasksOptions): TasksInfo {
+export function buildTasks({ root, out, build, date = new Date(), pilot, packVersion }: BuildTasksOptions): TasksInfo {
   const errors = validateTasks(root);
   if (errors.length) throw new Error(`в базе заданий ошибки:\n${errors.join('\n')}`);
 
@@ -23,7 +32,7 @@ export function buildTasks({ root, out, build, date = new Date(), pilot }: Build
   const pad = (n: number) => String(n).padStart(2, '0');
   const pack = {
     schemaVersion: TASKS_SCHEMA,
-    packVersion: `${date.getUTCFullYear()}.${pad(date.getUTCMonth() + 1)}.${pad(date.getUTCDate())}.${build}`,
+    packVersion: packVersion ?? `${date.getUTCFullYear()}.${pad(date.getUTCMonth() + 1)}.${pad(date.getUTCDate())}.${build}`,
     pilot,
     modules: Object.fromEntries(
       MODULE_CODES.map((m) => {
@@ -46,12 +55,27 @@ export function buildTasks({ root, out, build, date = new Date(), pilot }: Build
   };
 }
 
+/**
+ * Собирает базу рядом с уже собранной библиотекой и вписывает её в манифест.
+ * Версия базы берётся из манифеста: у пакета одна версия на библиотеку и задания,
+ * по ней программа решает, скачивать ли базу.
+ */
+export function buildTasksIntoPack(options: Omit<BuildTasksOptions, 'packVersion'>): TasksInfo {
+  const manifestPath = join(options.out, 'manifest.json');
+  if (!existsSync(manifestPath)) return buildTasks(options);
+  const manifest = Manifest.parse(JSON.parse(readFileSync(manifestPath, 'utf8')));
+  const info = buildTasks({ ...options, packVersion: manifest.packVersion });
+  manifest.tasks = info;
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+  return info;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const arg = (name: string, fallback: string) => {
     const i = process.argv.indexOf(`--${name}`);
     return i > 0 ? process.argv[i + 1] : fallback;
   };
-  const info = buildTasks({
+  const info = buildTasksIntoPack({
     root: arg('root', '..'),
     out: arg('out', '../dist-pack'),
     build: Number(arg('build', '1')),
