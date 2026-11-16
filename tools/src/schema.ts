@@ -83,6 +83,23 @@ export const DocMeta = z
   .strict();
 export type DocMeta = z.infer<typeof DocMeta>;
 
+export const Topic = z
+  .object({
+    id: DocId,
+    title: z.string().min(1),
+    // какие решения руководителя проверяет тема
+    why: z.string().min(1),
+    docs: z.array(z.object({ doc: DocId, anchors: z.array(z.string()).optional() }).strict()).min(1),
+  })
+  .strict();
+export type Topic = z.infer<typeof Topic>;
+
+const ModuleTopics = z.object({ title: z.string().min(1), ready: z.boolean(), topics: z.array(Topic) }).strict();
+export const Topics = z
+  .object({ modules: z.object({ K: ModuleTopics, R: ModuleTopics, P: ModuleTopics, Rez: ModuleTopics, I: ModuleTopics }).strict() })
+  .strict();
+export type Topics = z.infer<typeof Topics>;
+
 export const Manifest = z
   .object({
     schemaVersion: z.number().int().positive(),

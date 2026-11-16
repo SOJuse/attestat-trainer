@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { listDocIds, loadDoc, loadRegistry } from './corpus';
-import { ALLOWED_SOURCE_HOSTS } from './schema';
+import { listDocIds, loadDoc, loadRegistry, loadTopics } from './corpus';
+import { ALLOWED_SOURCE_HOSTS, MODULES } from './schema';
 
 export type Report = { errors: string[]; warnings: string[]; stats: Record<string, number> };
 
@@ -87,6 +87,50 @@ export function validateCorpus(root: string): Report {
   return { errors, warnings, stats };
 }
 
+/** Проверяет content/topics.yaml: темы ссылаются только на документы с текстом и на существующие разделы. */
+export function validateTopics(root: string): string[] {
+  const errors: string[] = [];
+  let topics;
+  try {
+    topics = loadTopics(root);
+  } catch (e) {
+    return [`topics.yaml: ${(e as Error).message}`];
+  }
+  const cache = new Map<string, Set<string> | null>();
+  const anchorsOf = (id: string) => {
+    if (!cache.has(id)) {
+      let doc = null;
+      try {
+        doc = loadDoc(root, id);
+      } catch {
+        doc = null;
+      }
+      const hasText = doc && (doc.meta.text === 'full' || doc.meta.text === 'ocr');
+      cache.set(id, hasText ? new Set(doc!.sections.map((s) => s.anchor)) : null);
+    }
+    return cache.get(id)!;
+  };
+  for (const m of MODULES) {
+    const seen = new Set<string>();
+    for (const topic of topics.modules[m].topics) {
+      const where = `${m}/${topic.id}:`;
+      if (seen.has(topic.id)) errors.push(`${where} повтор id темы`);
+      seen.add(topic.id);
+      for (const ref of topic.docs) {
+        const anchors = anchorsOf(ref.doc);
+        if (!anchors) {
+          errors.push(`${where} у документа ${ref.doc} нет текста в корпусе`);
+          continue;
+        }
+        for (const a of ref.anchors ?? []) {
+          if (!anchors.has(a)) errors.push(`${where} в документе ${ref.doc} нет раздела ${a}`);
+        }
+      }
+    }
+  }
+  return errors;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = validateCorpus(process.argv[2] ?? '..');
   const s = report.stats;
@@ -95,6 +139,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       `только запись: ${s.bibliographic}, не собрано: ${s.absent}`,
   );
   report.warnings.forEach((w) => console.log('предупреждение:', w));
-  report.errors.forEach((e) => console.error('ошибка:', e));
-  process.exit(report.errors.length ? 1 : 0);
+  const topicErrors = existsSync(join(process.argv[2] ?? '..', 'content', 'topics.yaml'))
+    ? validateTopics(process.argv[2] ?? '..')
+    : [];
+  [...report.errors, ...topicErrors].forEach((e) => console.error('ошибка:', e));
+  process.exit(report.errors.length + topicErrors.length ? 1 : 0);
 }

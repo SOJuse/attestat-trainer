@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { DocMeta, Registry, type RegistryEntry } from './schema';
+import { DocMeta, Registry, Topics, type RegistryEntry } from './schema';
 
 /** context — названия части, раздела и главы, в которых стоит раздел; пусто, если их нет. */
 export type Section = { anchor: string; heading: string; text: string; ord: number; context: string };
@@ -76,4 +76,8 @@ export function loadDoc(root: string, id: string): { meta: DocMeta; sections: Se
   const textPath = join(dir, 'text.md');
   const sections = existsSync(textPath) ? parseText(readFileSync(textPath, 'utf8')) : [];
   return { meta, sections };
+}
+
+export function loadTopics(root: string): Topics {
+  return Topics.parse(parse(readFileSync(join(root, 'content', 'topics.yaml'), 'utf8')));
 }
