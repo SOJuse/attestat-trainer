@@ -1,0 +1,10 @@
+- id: K-uvolnenie-001
+  type: input
+  difficulty: 1
+  situation: Темы нет в topics.yaml.
+  question: Сколько?
+  answer: 1
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-256, quote: По заявлению женщины }]
+  revision: 1
+  checked: '2026-11-18'

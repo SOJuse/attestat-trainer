@@ -7,6 +7,7 @@ on:
       - 'content/**'
       - 'tools/**'
       - 'app/src/core/stem.ts'
+      - 'app/src/core/taskSchema.ts'
       - 'app/package-lock.json'
       - '.github/workflows/content.yml'
   workflow_dispatch:
@@ -41,6 +42,9 @@ jobs:
         working-directory: tools
       - run: npm run build:library -- --out ../pack --build ${{ github.run_number }}
         working-directory: tools
+      # база заданий встаёт в тот же пакет и получает его версию; пока она пробная
+      - run: npm run build:tasks -- --pilot --out ../pack --build ${{ github.run_number }}
+        working-directory: tools
       - uses: actions/upload-artifact@v4
         with:
           name: pack
@@ -61,21 +65,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Подписать пакет
+      - name: Подписать библиотеку и базу заданий
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.PACK_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
-        run: npx --yes @tauri-apps/cli@2.12.4 signer sign site/library.sqlite.gz
-      - name: Записать подпись в манифест
+        run: |
+          npx --yes @tauri-apps/cli@2.12.4 signer sign site/library.sqlite.gz
+          npx --yes @tauri-apps/cli@2.12.4 signer sign site/tasks.json
+      - name: Записать подписи в манифест
         run: |
           node -e '
             const fs = require("fs");
             const m = JSON.parse(fs.readFileSync("site/manifest.json", "utf8"));
-            const sig = fs.readFileSync("site/" + m.library.file + ".sig", "utf8").trim();
-            if (!sig) throw new Error("пустая подпись");
-            m.library.signature = sig;
+            if (!m.tasks) throw new Error("в манифесте нет базы заданий");
+            for (const part of [m.library, m.tasks]) {
+              const sig = fs.readFileSync("site/" + part.file + ".sig", "utf8").trim();
+              if (!sig) throw new Error("пустая подпись: " + part.file);
+              part.signature = sig;
+              fs.unlinkSync("site/" + part.file + ".sig");
+            }
             fs.writeFileSync("site/manifest.json", JSON.stringify(m, null, 2) + "\n");
-            fs.unlinkSync("site/" + m.library.file + ".sig");
           '
       - uses: actions/upload-pages-artifact@v3
         with:

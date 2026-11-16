@@ -1,0 +1,78 @@
+- id: K-otpuska-001
+  type: single
+  difficulty: 1
+  situation: Цитаты нет в тексте раздела.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: false, why: нет }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-256, quote: этой фразы в статье нет }]
+  revision: 1
+  checked: '2026-11-18'
+- id: K-otpuska-001
+  type: single
+  difficulty: 1
+  situation: Повтор id.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: false, why: нет }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-256, quote: По заявлению женщины }]
+  revision: 1
+  checked: '2026-11-18'
+- id: K-otpuska-003
+  type: single
+  difficulty: 1
+  situation: Нет такого раздела.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: false, why: нет }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-999, quote: По заявлению женщины }]
+  revision: 1
+  checked: '2026-11-18'
+- id: K-otpuska-004
+  type: single
+  difficulty: 1
+  situation: Документ без текста.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: false, why: нет }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: lit-9, anchor: st-1, quote: что-нибудь }]
+  revision: 1
+  checked: '2026-11-18'
+- id: R-zakupki-005
+  type: single
+  difficulty: 1
+  situation: Модуль в id не совпадает с папкой.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: false, why: нет }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-256, quote: По заявлению женщины }]
+  revision: 1
+  checked: '2026-11-18'
+- id: K-otpuska-006
+  type: single
+  difficulty: 1
+  situation: Два верных варианта у single.
+  question: Вопрос?
+  options:
+    - { text: а, correct: true, why: да }
+    - { text: б, correct: true, why: да }
+    - { text: в, correct: false, why: нет }
+  explanation: Разбор.
+  refs: [{ doc: tk-rf, anchor: st-256, quote: По заявлению женщины }]
+  revision: 1
+  checked: '2026-11-18'

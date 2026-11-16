@@ -11,6 +11,12 @@ describe('SettingsView', () => {
     expect(screen.getByText(/не связан с Корпоративным университетом/)).toBeInTheDocument();
   });
 
+  it('показывает версии библиотеки и базы заданий', async () => {
+    render(<SettingsView platform={createFakePlatform()} />);
+    expect(await screen.findByText('Библиотека документов: 2026.01.01.1')).toBeInTheDocument();
+    expect(await screen.findByText('База заданий: 2026.01.01.1')).toBeInTheDocument();
+  });
+
   it('ссылка на репозиторий открывается через платформу', async () => {
     const openExternal = vi.fn(async () => {});
     render(<SettingsView platform={createFakePlatform({ openExternal })} />);

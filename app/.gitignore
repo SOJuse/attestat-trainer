@@ -33,3 +33,7 @@ src-tauri/icons/ios
 /src/assets/react.svg
 
 *.tsbuildinfo
+
+test-results
+playwright-report
+.claude

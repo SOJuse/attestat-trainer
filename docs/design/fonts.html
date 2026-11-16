@@ -1,0 +1,312 @@
+<title>Шрифты тренажёра</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&family=Golos+Text:wght@400;600&family=PT+Serif:wght@700&family=PT+Sans:wght@400;700&family=Literata:opsz,wght@7..72,600&family=Onest:wght@400;600&display=swap">
+<style>
+  /* Макет: окно программы в натуральную величину, три пары шрифтов переключаются сверху.
+     Вид один, светлый: программа повторяет шаблон презентаций школы, тёмной темы у неё нет. */
+  :root {
+    --ink: #13293d;
+    --muted: #5a6b79;
+    --accent: #0f6cb0;
+    --line: #dce6ee;
+    --soft: #e4eff7;
+    --softer: #eff5fa;
+    --bg: #ffffff;
+    --page: #f4f8fb;
+    --ok: #357f2c;
+    --ok-text: #2a6723;
+    --ok-soft: #eaf4e8;
+    --bad: #d8332a;
+    --bad-text: #b3261e;
+    --bad-soft: #fbeceb;
+    --warn: #f0b429;
+    --font-text: 'Golos Text', system-ui, sans-serif;
+    --font-heading: 'Source Serif 4', Georgia, serif;
+    --heading-weight: 600;
+    --strong: 600;
+  }
+  :root[data-pair="pt"] {
+    --font-text: 'PT Sans', system-ui, sans-serif;
+    --font-heading: 'PT Serif', Georgia, serif;
+    --heading-weight: 700;
+    --strong: 700;
+  }
+  :root[data-pair="literata"] {
+    --font-text: 'Onest', system-ui, sans-serif;
+    --font-heading: 'Literata', Georgia, serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+    padding-block: 28px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .intro h1 { margin: 0 0 6px; font-size: 24px; line-height: 1.25; text-wrap: balance; }
+  .intro p { margin: 0; max-width: 68ch; color: var(--muted); }
+
+  .pairs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pair {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .pair:hover { border-color: var(--accent); }
+  .pair[aria-pressed="true"] { border-color: var(--accent); background: var(--soft); }
+  .pair:focus-visible, .mock button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pair b { display: block; font-size: 15px; }
+  .pair span { display: block; font-size: 13px; color: var(--muted); }
+
+  .label { margin: 6px 0 -10px; font-size: 14px; color: var(--muted); }
+
+  /* ---------- окно программы ---------- */
+  .mock {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: var(--font-text);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .side {
+    flex: 0 0 196px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 18px 12px 12px;
+    background: var(--softer);
+    border-right: 1px solid var(--line);
+  }
+  .logo {
+    width: 60px; height: 60px; margin: 0 8px 16px;
+    display: grid; place-items: center;
+    border-radius: 8px; background: var(--accent); color: #fff;
+    font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 19px;
+  }
+  .nav { padding: 7px 12px; border-radius: 8px; }
+  .nav.is-current { background: var(--soft); color: var(--accent); font-weight: var(--strong); }
+  .nav.is-last { margin-top: auto; color: var(--muted); }
+  .main { flex: 1; min-width: 0; padding: 26px 34px 30px; }
+
+  .crumbs { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; color: var(--muted); font-size: 14px; }
+  .crumbs .count { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: var(--accent); }
+
+  .situation { max-width: 66ch; margin: 16px 0 10px; }
+  .question {
+    max-width: 62ch; margin: 0 0 4px;
+    font-family: var(--font-heading); font-weight: var(--heading-weight);
+    font-size: 21px; line-height: 1.3; text-wrap: balance;
+  }
+  .hint { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+
+  .options { display: flex; flex-direction: column; gap: 8px; max-width: 70ch; }
+  .option { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .option .row { display: flex; gap: 10px; align-items: baseline; }
+  .option .num { flex: none; width: 1.3em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .option .verdict { flex: none; margin-left: auto; font-size: 14px; font-weight: var(--strong); white-space: nowrap; }
+  .option .why { margin: 6px 0 0 calc(1.3em + 10px); font-size: 15px; color: var(--muted); }
+  .option.right { background: var(--ok-soft); border-color: #c5dfc0; }
+  .option.right .verdict { color: var(--ok-text); }
+  .option.wrong { background: var(--bad-soft); border-color: #efc9c6; }
+  .option.wrong .verdict { color: var(--bad-text); }
+
+  .review { max-width: 70ch; margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .review h3 { margin: 0; font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 17px; }
+  .review p { margin: 0; }
+  .quote { margin: 0; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--softer); border-radius: 0 8px 8px 0; }
+  .quote cite { display: block; margin-top: 6px; font-style: normal; font-size: 14px; color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+  .btn { padding: 8px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .link { color: var(--accent); font-size: 15px; }
+
+  /* ---------- «Сегодня» ---------- */
+  .today h2 { margin: 0 0 4px; font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 28px; line-height: 1.2; }
+  .today .date { margin: 0 0 20px; color: var(--muted); }
+  .plan { display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: flex-end; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+  .figure b { display: block; font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 34px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .figure span { color: var(--muted); font-size: 14px; }
+  .plan .btn { margin-left: auto; }
+  .cols { display: flex; flex-wrap: wrap; gap: 20px 44px; margin-top: 20px; }
+  .col { flex: 1 1 260px; min-width: 0; }
+  .col h3 { margin: 0 0 10px; font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 17px; }
+  .topic { display: flex; gap: 12px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .topic span:first-child { min-width: 0; }
+  .topic .pct { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--bad-text); font-weight: var(--strong); }
+  .bar { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; margin: 6px 0 10px; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .note { color: var(--muted); font-size: 14px; margin: 0; }
+
+  .sample { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; }
+  .sample p { margin: 0 0 8px; }
+  .sample .h { font-family: var(--font-heading); font-weight: var(--heading-weight); font-size: 22px; line-height: 1.25; }
+  .sample .t { font-family: var(--font-text); max-width: 70ch; }
+  .sample .n { font-family: var(--font-text); font-variant-numeric: tabular-nums; color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .mock { flex-direction: column; }
+    .side { flex: none; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .logo { width: 40px; height: 40px; margin: 0 6px 0 0; font-size: 13px; }
+    .nav { padding: 5px 9px; font-size: 14px; }
+    .nav.is-last { margin-top: 0; }
+    .main { padding: 18px 16px 22px; }
+    .option .row { flex-wrap: wrap; }
+    .option .verdict { margin-left: calc(1.3em + 10px); }
+  }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Три пары шрифтов для тренажёра</h1>
+    <p>Ниже два экрана программы: задание с разбором и «Сегодня». Переключайте пары и смотрите, какую удобнее читать подолгу. Цвета и отступы во всех вариантах одинаковые. Задание взято для примера, цифры на экране «Сегодня» условные.</p>
+  </div>
+
+  <div class="pairs" role="group" aria-label="Пара шрифтов">
+    <button type="button" class="pair" id="pair-source" data-pair="source" aria-pressed="true">
+      <b>1. Source Serif и Golos Text</b>
+      <span>Спокойная антиква в заголовках, нейтральный гротеск в тексте</span>
+    </button>
+    <button type="button" class="pair" id="pair-pt" data-pair="pt" aria-pressed="false">
+      <b>2. PT Serif и PT Sans</b>
+      <span>Привычная пара из государственных сайтов и документов</span>
+    </button>
+    <button type="button" class="pair" id="pair-literata" data-pair="literata" aria-pressed="false">
+      <b>3. Literata и Onest</b>
+      <span>Книжная антиква в заголовках, более округлый текст</span>
+    </button>
+  </div>
+
+  <p class="label">Задание после проверки ответа</p>
+  <div class="mock">
+    <div class="side">
+      <div class="logo">1103</div>
+      <div class="nav is-current">Сегодня</div>
+      <div class="nav">Тренировка</div>
+      <div class="nav">Экзамен</div>
+      <div class="nav">Карточки</div>
+      <div class="nav">Библиотека</div>
+      <div class="nav">Прогресс</div>
+      <div class="nav is-last">Настройки</div>
+    </div>
+    <div class="main">
+      <div class="crumbs">
+        <span>Кадры</span><span>Отпуска</span>
+        <span>сложность <span class="dots"><i class="on"></i><i class="on"></i><i></i></span></span>
+        <span class="count">7 из 20</span>
+      </div>
+      <p class="situation">Воспитатель дошкольной группы находится в отпуске по уходу за ребёнком и получает ежемесячное пособие. Ребёнку год и два месяца. Она хочет вернуться к работе раньше, чем ему исполнится полтора года.</p>
+      <p class="question">На каких условиях она может работать и при этом сохранить пособие?</p>
+      <p class="hint">Отметьте все верные варианты.</p>
+
+      <div class="options">
+        <div class="option right">
+          <div class="row"><span class="num">1</span><span>Выйти на работу на условиях неполного рабочего времени</span><span class="verdict">верно, отмечено</span></div>
+          <p class="why">Статья 256 прямо называет неполное рабочее время среди случаев, когда право на пособие сохраняется.</p>
+        </div>
+        <div class="option right">
+          <div class="row"><span class="num">2</span><span>Выйти на работу на полный рабочий день</span><span class="verdict">верно, пропущено</span></div>
+          <p class="why">Пособие сохраняется при выходе на работу из отпуска до полутора лет ребёнка. Неполное время в норме названо как частный случай, а не как условие.</p>
+        </div>
+        <div class="option wrong">
+          <div class="row"><span class="num">3</span><span>Работать можно, но пособие прекращается со дня выхода</span><span class="verdict">неверно, отмечено</span></div>
+          <p class="why">Так было до 2024 года, если работница выходила на полный день. В действующей редакции выход на работу права на пособие не лишает.</p>
+        </div>
+        <div class="option right">
+          <div class="row"><span class="num">4</span><span>Не выходя из отпуска, работать у другого работодателя</span><span class="verdict">верно, отмечено</span></div>
+          <p class="why">Этот случай назван в той же части статьи 256 рядом с выходом на работу.</p>
+        </div>
+      </div>
+
+      <div class="review">
+        <h3>Разбор</h3>
+        <p>Ответ неполный: верны варианты 1, 2 и 4. Ловушка здесь в слове «сохранить»: вопрос не о том, можно ли выйти на работу, а о том, что будет с пособием.</p>
+        <blockquote class="quote">
+          Право на получение пособия по обязательному социальному страхованию сохраняется в случае, если женщина или лица, указанные в части второй настоящей статьи, выходят на работу (в том числе на условиях неполного рабочего времени, работы на дому или дистанционной работы) из отпуска по уходу за ребёнком до достижения им возраста полутора лет или в период указанного отпуска работают у другого работодателя.
+          <cite>Трудовой кодекс, статья 256. Редакция от 01.09.2026</cite>
+        </blockquote>
+        <div class="actions">
+          <button type="button" class="btn primary" tabindex="-1">Дальше</button>
+          <span class="link">Открыть статью в библиотеке</span>
+          <span class="link">Сообщить об ошибке</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="label">Экран «Сегодня»</p>
+  <div class="mock">
+    <div class="side">
+      <div class="logo">1103</div>
+      <div class="nav is-current">Сегодня</div>
+      <div class="nav">Тренировка</div>
+      <div class="nav">Экзамен</div>
+      <div class="nav">Карточки</div>
+      <div class="nav">Библиотека</div>
+      <div class="nav">Прогресс</div>
+      <div class="nav is-last">Настройки</div>
+    </div>
+    <div class="main today">
+      <h2>Сегодня</h2>
+      <p class="date">Понедельник, 16 ноября. Занятия шесть дней подряд.</p>
+      <div class="plan">
+        <div class="figure"><b>20</b><span>заданий на сегодня</span></div>
+        <div class="figure"><b>12</b><span>пора повторить</span></div>
+        <div class="figure"><b>8</b><span>новых</span></div>
+        <button type="button" class="btn primary" tabindex="-1">Начать</button>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <h3>Где слабее всего</h3>
+          <div class="topic"><span>Совмещение и совместительство</span><span class="pct">40%</span></div>
+          <div class="topic"><span>Исполнение контракта</span><span class="pct">50%</span></div>
+          <div class="topic"><span>Согласие на обработку персональных данных</span><span class="pct">55%</span></div>
+        </div>
+        <div class="col">
+          <h3>Готовность к экзамену</h3>
+          <div class="bar"><i style="width:62%"></i></div>
+          <p>Шанс пройти порог: около 62%.</p>
+          <p class="note">Нужно не меньше 70% за весь тест и не меньше 50% в каждом модуле.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="label">Те же шрифты крупно</p>
+  <div class="sample">
+    <p class="h">Допускается ли совмещение без письменного согласия работника?</p>
+    <p class="t">Работодатель вправе досрочно отменить поручение о выполнении дополнительной работы, предупредив об этом работника в письменной форме не позднее чем за три рабочих дня.</p>
+    <p class="n">273-ФЗ, статья 47 · 44-ФЗ, статья 34 · 1 234 567,89 · 0,5 · 70% · № 1441</p>
+  </div>
+</div>
+
+<script>
+  const root = document.documentElement;
+  const buttons = [...document.querySelectorAll('.pair')];
+  function choose(pair) {
+    if (pair === 'source') root.removeAttribute('data-pair');
+    else root.setAttribute('data-pair', pair);
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pair === pair)));
+    try { localStorage.setItem('pair', pair); } catch (e) { /* без хранилища просто не запомним выбор */ }
+  }
+  buttons.forEach((b) => b.addEventListener('click', () => choose(b.dataset.pair)));
+  try {
+    const saved = localStorage.getItem('pair');
+    if (saved && buttons.some((b) => b.dataset.pair === saved)) choose(saved);
+  } catch (e) { /* хранилище недоступно */ }
+</script>

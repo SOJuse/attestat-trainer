@@ -1,0 +1,11 @@
+- id: P-doshkolnye-gruppy-001
+  type: sequence
+  difficulty: 2
+  situation: Директор читает приказ о порядке дошкольного образования.
+  question: Расставьте пункты приказа по порядку.
+  items: [Утвердить Порядок, Признать утратившими силу, Вступает в силу]
+  explanation: Так пункты идут в приказе.
+  refs:
+    - { doc: prikaz-373, anchor: p-2, quote: Признать утратившими силу, scan_page: 1 }
+  revision: 1
+  checked: '2026-11-18'

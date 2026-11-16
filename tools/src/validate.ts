@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { listDocIds, loadDoc, loadRegistry, loadTopics } from './corpus';
 import { ALLOWED_SOURCE_HOSTS, MODULES } from './schema';
+import { validateTasks } from './validate-tasks';
 
 export type Report = { errors: string[]; warnings: string[]; stats: Record<string, number> };
 
@@ -142,6 +143,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const topicErrors = existsSync(join(process.argv[2] ?? '..', 'content', 'topics.yaml'))
     ? validateTopics(process.argv[2] ?? '..')
     : [];
-  [...report.errors, ...topicErrors].forEach((e) => console.error('ошибка:', e));
-  process.exit(report.errors.length + topicErrors.length ? 1 : 0);
+  const root = process.argv[2] ?? '..';
+  const taskErrors = existsSync(join(root, 'content', 'tasks')) ? validateTasks(root) : [];
+  [...report.errors, ...topicErrors, ...taskErrors].forEach((e) => console.error('ошибка:', e));
+  process.exit(report.errors.length + topicErrors.length + taskErrors.length ? 1 : 0);
 }

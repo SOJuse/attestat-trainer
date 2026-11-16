@@ -114,6 +114,17 @@ export const Manifest = z
         docs: z.number().int().nonnegative(),
       })
       .strict(),
+    // база заданий лежит рядом с библиотекой; программа 0.2.0 этот блок не читает
+    tasks: z
+      .object({
+        file: z.string(),
+        sha256: z.string().regex(/^[0-9a-f]{64}$/),
+        signature: z.string().min(1).optional(),
+        bytes: z.number().int().positive(),
+        count: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type Manifest = z.infer<typeof Manifest>;

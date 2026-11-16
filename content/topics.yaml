@@ -171,6 +171,7 @@ modules:
         - st-136
         - st-137
         - st-138
+        - st-140
         - st-142
         - st-144
         - st-145
@@ -328,13 +329,17 @@ modules:
       docs:
       - doc: tk-rf
         anchors:
+        - st-79
+        - st-81
         - st-92
+        - st-121
         - st-183
         - st-254
         - st-255
         - st-256
         - st-259
         - st-260
+        - st-261
         - st-262
         - st-263
         - st-264
@@ -344,6 +349,7 @@ modules:
         - st-5
         - st-6
         - st-7
+        - st-11-1
         - st-13
         - st-15
       - doc: prikaz-1089n
@@ -1131,6 +1137,7 @@ modules:
       docs:
       - doc: fz-273
         anchors:
+        - st-34
         - st-59
       - doc: prikaz-233-552
         anchors:
@@ -1388,7 +1395,12 @@ modules:
         - pril-1-p-7
         - pril-1-p-10
         - pril-1-p-11
+        - pril-1-p-12
+        - pril-1-p-13
+        - pril-1-p-14
         - pril-1-p-15
+        - pril-1-p-16
+        - pril-1-p-20
         - pril-1-p-22
         - pril-1-p-24
         - pril-1-p-27

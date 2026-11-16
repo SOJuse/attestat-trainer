@@ -1,0 +1,10 @@
+- id: P-doshkolnye-gruppy-001
+  type: input
+  difficulty: 1
+  situation: Распознанный документ без страницы скана.
+  question: Сколько?
+  answer: 1
+  explanation: Разбор.
+  refs: [{ doc: prikaz-373, anchor: p-2, quote: Признать утратившими силу }]
+  revision: 1
+  checked: '2026-11-18'
