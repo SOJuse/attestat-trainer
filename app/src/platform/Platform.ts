@@ -1,5 +1,6 @@
 import type { LibraryStore } from './Library';
 import type { Store } from './Store';
+import type { TasksSource } from './Tasks';
 
 export type AppUpdate = { version: string; notes?: string };
 
@@ -14,4 +15,10 @@ export interface Platform {
   library: LibraryStore;
   /** данные пользователя: прогресс, история, настройки */
   store: Store;
+  /** база заданий */
+  tasks: TasksSource;
+  /** Предлагает сохранить текст в файл. false — человек отменил. */
+  saveFile(name: string, text: string): Promise<boolean>;
+  /** Предлагает выбрать файл и отдаёт его текст. null — человек отменил. */
+  pickFile(): Promise<string | null>;
 }

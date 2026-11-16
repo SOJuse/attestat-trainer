@@ -5,6 +5,7 @@ import { check, type Update } from '@tauri-apps/plugin-updater';
 import { tauriLibrary } from './libraryTauri';
 import type { Platform } from './Platform';
 import { tauriStore } from './storeTauri';
+import { browserTasks } from './tasksBrowser';
 
 /** Обновление, найденное последней проверкой. Ставится именно оно, без второго запроса. */
 let found: Update | null = null;
@@ -38,4 +39,8 @@ export const tauriPlatform: Platform = {
   openExternal: (url) => openUrl(url),
   library: tauriLibrary,
   store: tauriStore,
+  // до Task 8 (content.rs) и Task 11 (диалоги) настольная версия работает на зашитой базе
+  tasks: browserTasks,
+  saveFile: async () => false,
+  pickFile: async () => null,
 };
