@@ -76,7 +76,7 @@ export default function App({ platform }: { platform: Platform }) {
           )}
           {pane('exam', <ExamView library={platform.library} openExternal={platform.openExternal} />)}
           {pane('cards', <CardsView />)}
-          {pane('progress', <ProgressView onTrain={train} />)}
+          {pane('progress', <ProgressView onTrain={train} onOpenLibrary={openLibrary} />)}
           {progressSlot && createPortal(<ProgressSettings platform={platform} />, progressSlot)}
         </AppDataProvider>
         {pane(

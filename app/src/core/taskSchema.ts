@@ -140,7 +140,16 @@ const ModuleInfo = z
   .object({
     title: text,
     ready: z.boolean(),
-    topics: z.array(z.object({ id: slug, title: text }).strict()),
+    topics: z.array(
+      z
+        .object({
+          id: slug,
+          title: text,
+          /** первый опорный раздел темы: с него «Прогресс» открывает норму в библиотеке */
+          doc: z.object({ id: slug, anchor: text }).strict().optional(),
+        })
+        .strict(),
+    ),
   })
   .strict();
 

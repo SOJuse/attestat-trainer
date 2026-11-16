@@ -259,3 +259,16 @@ describe('TaskView: разбор в протоколе', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Без ответа');
   });
 });
+
+describe('TaskView: порядок на экзамене', () => {
+  it('показанная расстановка шагов сразу считается ответом', () => {
+    const onAnswered = show(sequence, { mode: 'exam' });
+    expect(onAnswered).toHaveBeenCalledTimes(1);
+    expect(onAnswered).toHaveBeenCalledWith(true, { type: 'sequence', order: [0, 1, 2] });
+  });
+
+  it('при возврате к заданию ответ не пересылается заново', () => {
+    const onAnswered = show(sequence, { mode: 'exam', initialAnswer: { type: 'sequence', order: [2, 0, 1] } });
+    expect(onAnswered).not.toHaveBeenCalled();
+  });
+});

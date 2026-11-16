@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react';
+import { useId, type KeyboardEvent } from 'react';
 import type { Answer } from '../core/grade';
 import type { CaseStep, Task } from '../core/taskSchema';
 
@@ -42,6 +42,8 @@ type Props = {
 };
 
 export function TaskInputs({ task, answer, order, disabled, onChange, reviewed }: Props) {
+  // на экране может быть несколько заданий сразу (разделы остаются смонтированными, протокол экзамена)
+  const uid = useId();
   if ((task.type === 'single' || task.type === 'multiple') && answer.type === task.type) {
     const chosen = answer.type === 'single' ? (answer.choice === null ? [] : [answer.choice]) : answer.choices;
     const toggle = (index: number) => {
@@ -69,7 +71,7 @@ export function TaskInputs({ task, answer, order, disabled, onChange, reviewed }
               <label className="option__row">
                 <input
                   type={task.type === 'single' ? 'radio' : 'checkbox'}
-                  name="option"
+                  name={`option-${uid}`}
                   checked={isChosen}
                   disabled={disabled}
                   onChange={() => toggle(index)}
@@ -134,11 +136,11 @@ export function TaskInputs({ task, answer, order, disabled, onChange, reviewed }
           const ok = reviewed && chosen === i;
           return (
             <div key={pair.left} className="matching__row">
-              <label htmlFor={`match-${i}`} className="matching__left">
+              <label htmlFor={`match-${uid}-${i}`} className="matching__left">
                 {pair.left}
               </label>
               <select
-                id={`match-${i}`}
+                id={`match-${uid}-${i}`}
                 aria-label={pair.left}
                 disabled={disabled}
                 value={chosen === null ? '' : task.pairs[chosen].right}

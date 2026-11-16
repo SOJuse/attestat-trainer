@@ -183,6 +183,30 @@ describe('TrainingView', () => {
     ]);
   });
 
+  it('скрытый шаг кейса при следующем прохождении не показывается', async () => {
+    const step = (change: string, q: string) => ({
+      change,
+      type: 'single' as const,
+      difficulty: 2 as const,
+      question: q,
+      options: [
+        { text: 'верный', correct: true, why: 'да' },
+        { text: 'неверный', correct: false, why: 'нет' },
+        { text: 'тоже неверный', correct: false, why: 'нет' },
+      ],
+      explanation: 'Разбор шага.',
+      refs: [{ doc: 'tk-rf', anchor: 'st-256', quote: 'цитата' }],
+    });
+    const chain = { id: 'K-case-001', module: 'K' as const, topic: 'a', title: 'Кейс', intro: 'Вводная.', steps: [step('', 'Первый?'), step('Изменение.', 'Второй?'), step('Ещё.', 'Третий?')], revision: 1 };
+    const hidden = { ...small, items: { 'K-case-001#1': { revision: 1, hidden: true as const } } };
+    mount(<TrainingView />, createFakeStore(JSON.stringify(hidden)), makePack(2, { cases: [chain] }));
+    const button = await screen.findByRole('button', { name: /Кейс/ });
+    expect(button).toHaveTextContent('шагов: 2');
+    await userEvent.click(button);
+    expect(screen.getByRole('heading', { level: 1, name: 'Второй?' })).toBeInTheDocument();
+    expect(screen.getByText('Шаг 1 из 2')).toBeInTheDocument();
+  });
+
   it('открытие библиотеки из разбора передаётся наверх', async () => {
     const onOpenLibrary = vi.fn();
     mount(<TrainingView onOpenLibrary={onOpenLibrary} />);

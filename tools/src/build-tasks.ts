@@ -50,7 +50,11 @@ export function buildTasks({ root, out, build, date = new Date(), pilot, packVer
     modules: Object.fromEntries(
       MODULE_CODES.map((m) => {
         const info = topics.modules[m];
-        return [m, { title: info.title, ready: info.ready, topics: info.topics.map((t) => ({ id: t.id, title: t.title })) }];
+        return [m, { title: info.title, ready: info.ready, topics: info.topics.map((t) => {
+          // первый раздел первого документа темы, у которого есть текст
+          const first = t.docs.find((d) => (d.anchors?.length ?? 0) > 0 && loadDoc(root, d.doc));
+          return first ? { id: t.id, title: t.title, doc: { id: first.doc, anchor: first.anchors![0] } } : { id: t.id, title: t.title };
+        }) }];
       }),
     ),
     docs,

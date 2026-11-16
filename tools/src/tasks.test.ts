@@ -65,7 +65,8 @@ describe('buildTasks', () => {
     expect(pack.packVersion).toBe('2026.11.20.4');
     expect(pack.pilot).toBe(true);
     expect([pack.tasks.length, pack.cases.length, pack.cards.length]).toEqual([3, 1, 1]);
-    expect(pack.modules.K.topics).toEqual([{ id: 'otpuska', title: 'Отпуска' }]);
+    expect(pack.modules.K.topics[0]).toMatchObject({ id: 'otpuska', title: 'Отпуска' });
+    expect(pack.modules.K.topics[0].doc?.id).toBeTruthy();
     expect(info.count).toBe(3);
     // у каждой ссылки есть подпись, которая не зависит от библиотеки
     const used = new Set(pack.tasks.flatMap((t) => t.refs.map((r) => r.doc)));

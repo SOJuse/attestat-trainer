@@ -63,7 +63,7 @@ export function TrainingView({ onOpenLibrary, openExternal, initialFilter = {} }
   };
 
   const startCase = (chain: PlacedCase) => {
-    const items: RunItem[] = chain.steps.map((step, i) => ({
+    const items: RunItem[] = chain.steps.flatMap((step, i) => (data.items[`${chain.id}#${i + 1}`]?.hidden ? [] : [{
       id: `${chain.id}#${i + 1}`,
       revision: chain.revision,
       task: step,
@@ -79,9 +79,15 @@ export function TrainingView({ onOpenLibrary, openExternal, initialFilter = {} }
           )}
         </div>
       ),
-    }));
+    }]));
     setRun({ items, mode: 'case', label: (i, n) => `Шаг ${i + 1} из ${n}` });
   };
+
+  // скрытые шаги не показываются; кейс, в котором скрыто всё, из списка уходит
+  const cases = pack.cases.flatMap((chain) => {
+    const steps = chain.steps.filter((_, i) => !data.items[`${chain.id}#${i + 1}`]?.hidden).length;
+    return steps > 0 ? [{ chain, steps }] : [];
+  });
 
   const set = (patch: Partial<TrainingFilter>) => setFilter((f) => ({ ...f, ...patch }));
   const topics = filter.module ? pack.modules[filter.module].topics : [];
@@ -158,17 +164,17 @@ export function TrainingView({ onOpenLibrary, openExternal, initialFilter = {} }
       </div>
       {ids.length === 0 && <p className="muted">Под такой набор заданий нет. Снимите один из фильтров.</p>}
 
-      {pack.cases.length > 0 && (
+      {cases.length > 0 && (
         <>
           <h2>Кейсы</h2>
           <p className="muted">Одна ситуация в несколько шагов: на каждом шаге условия меняются.</p>
           <ul className="docs" aria-label="Кейсы">
-            {pack.cases.map((chain) => (
+            {cases.map(({ chain, steps }) => (
               <li key={chain.id}>
                 <button type="button" className="doc" onClick={() => startCase(chain)}>
                   <span className="doc__title">{chain.title}</span>
                   <span className="doc__status">
-                    {pack.modules[chain.module].title}, шагов: {chain.steps.length}
+                    {pack.modules[chain.module].title}, шагов: {steps}
                   </span>
                 </button>
               </li>

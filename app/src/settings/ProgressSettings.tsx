@@ -1,3 +1,4 @@
+import { focusOnOpen } from '../components/focus';
 import { useState } from 'react';
 import { emptyUserData, exportUserData, importUserData, reconcile, UserDataError, type UserData } from '../core/progress';
 import { plural } from '../core/plural';
@@ -116,7 +117,7 @@ export function ProgressSettings({ platform }: { platform: Platform }) {
       </div>
 
       {dialog.kind === 'import' && (
-        <div className="confirm" role="alertdialog" aria-label="Загрузка прогресса">
+        <div className="confirm" role="alertdialog" tabIndex={-1} ref={focusOnOpen} aria-label="Загрузка прогресса">
           <p>
             Текущий прогресс ({answers(data.attempts.length)}) будет заменён прогрессом из файла ({answers(dialog.data.attempts.length)}).
             Вернуть его можно будет только из сохранённого файла.
@@ -140,6 +141,7 @@ export function ProgressSettings({ platform }: { platform: Platform }) {
             className="number__field settings__word"
             aria-label="Слово для подтверждения"
             autoComplete="off"
+            ref={focusOnOpen}
             value={dialog.typed}
             onChange={(e) => setDialog({ kind: 'reset', typed: e.target.value })}
           />

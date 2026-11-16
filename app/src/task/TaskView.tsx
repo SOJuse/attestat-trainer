@@ -83,6 +83,14 @@ export function TaskView({
     onAnswered(correct, answer);
   };
 
+  // На экзамене начальная расстановка шагов уже ответ: человек мог счесть её верной и ничего не двигать.
+  const shown = useRef(false);
+  useEffect(() => {
+    if (shown.current || mode !== 'exam' || review || task.type !== 'sequence' || initialAnswer) return;
+    shown.current = true;
+    onAnswered(grade(task, answer), answer);
+  });
+
   // состояние для обработчика клавиш без переподписки на каждое изменение
   const live = useRef({ answer, reviewed, check, change, onNext });
   useEffect(() => {
