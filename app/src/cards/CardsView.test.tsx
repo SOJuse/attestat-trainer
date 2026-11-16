@@ -34,7 +34,7 @@ const saved = (store: { text: string | null }) => JSON.parse(store.text!) as Use
 describe('CardsView', () => {
   it('для новичка предлагает взять новые карточки', async () => {
     mount(<CardsView />);
-    expect(await screen.findByText(/На сегодня карточек нет/)).toBeInTheDocument();
+    expect(await screen.findByText(/Повторять сегодня нечего/)).toBeInTheDocument();
     expect(screen.getByText(/Новых: 3/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Взять новые' }));
     expect(screen.getByText('Карточка 1 из 3')).toBeInTheDocument();

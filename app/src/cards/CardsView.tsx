@@ -137,7 +137,7 @@ export function CardsView() {
               <span>Пора повторить: {due.length}</span>
             </div>
           ) : (
-            <p>На сегодня карточек нет.</p>
+            <p>Повторять сегодня нечего.</p>
           )}
 
           {fresh.length > 0 && (
