@@ -1,4 +1,5 @@
 import type { LibraryStore } from './Library';
+import type { Store } from './Store';
 
 export type AppUpdate = { version: string; notes?: string };
 
@@ -11,4 +12,6 @@ export interface Platform {
   installAppUpdate(onProgress?: (fraction: number) => void): Promise<void>;
   openExternal(url: string): Promise<void>;
   library: LibraryStore;
+  /** данные пользователя: прогресс, история, настройки */
+  store: Store;
 }

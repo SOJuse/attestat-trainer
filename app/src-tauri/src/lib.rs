@@ -1,4 +1,5 @@
 mod library;
+mod store;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -12,6 +13,8 @@ pub fn run() {
             library::commands::library_doc,
             library::commands::library_sections,
             library::commands::library_search,
+            store::commands::store_load,
+            store::commands::store_save,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

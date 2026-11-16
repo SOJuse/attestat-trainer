@@ -1,5 +1,6 @@
 import type { LibraryStore } from './Library';
 import type { Platform } from './Platform';
+import type { Store } from './Store';
 
 /** Библиотека-подделка: установлена и пуста, любой метод можно переопределить. */
 export function createFakeLibrary(overrides: Partial<LibraryStore> = {}): LibraryStore {
@@ -17,6 +18,18 @@ export function createFakeLibrary(overrides: Partial<LibraryStore> = {}): Librar
   };
 }
 
+/** Хранилище в памяти. `initial` — что «лежит на диске» при запуске. */
+export function createFakeStore(initial: string | null = null): Store & { text: string | null } {
+  const store = {
+    text: initial,
+    load: async () => store.text,
+    save: async (text: string) => {
+      store.text = text;
+    },
+  };
+  return store;
+}
+
 type Overrides = Partial<Omit<Platform, 'library'>> & { library?: Partial<LibraryStore> };
 
 /** Управляемая подделка для тестов. */
@@ -27,6 +40,7 @@ export function createFakePlatform({ library, ...overrides }: Overrides = {}): P
     installAppUpdate: async () => {},
     openExternal: async () => {},
     library: createFakeLibrary(library),
+    store: createFakeStore(),
     ...overrides,
   };
 }

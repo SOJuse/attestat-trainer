@@ -1,5 +1,6 @@
 import { browserLibrary } from './libraryBrowser';
 import type { Platform } from './Platform';
+import { browserStore } from './storeBrowser';
 
 /** Запуск в обычном браузере: для разработки и автотестов интерфейса. */
 export const browserPlatform: Platform = {
@@ -10,4 +11,5 @@ export const browserPlatform: Platform = {
     window.open(url, '_blank', 'noopener');
   },
   library: browserLibrary,
+  store: browserStore,
 };
