@@ -96,7 +96,7 @@ export function validateTasks(root: string): string[] {
 
   // баланс считается только у модулей, объявленных готовыми
   for (const [module, info] of Object.entries(topics.modules)) {
-    if (info.ready) errors.push(...checkBalance(module, info.topics.map((t) => t.id), placed[module] ?? []));
+    if (info.ready) errors.push(...checkBalance(module, info.topics.map((t) => t.id), placed[module] ?? [], info.target));
   }
 
   for (const raw of cases) {

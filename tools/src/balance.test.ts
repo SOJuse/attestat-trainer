@@ -43,6 +43,12 @@ describe('баланс готового модуля', () => {
     expect(errors.join('\n')).toMatch(/в теме e заданий 0/);
   });
 
+  it('меньший объём принимается, если он задан для модуля', () => {
+    const forty = balanced().slice(0, 40);
+    expect(checkBalance('K', topics, forty).join('\n')).toMatch(/заданий 40, нужно не меньше 60/);
+    expect(checkBalance('K', topics, forty, 40).join('\n')).not.toMatch(/нужно не меньше 40/);
+  });
+
   it('перекос типов и сложности', () => {
     const items = balanced().map((x, i) => ({ ...x, task: make(i + 1, 'single', 1, i) }));
     const text = checkBalance('K', topics, items).join('\n');

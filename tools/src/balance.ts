@@ -23,12 +23,12 @@ type Placed = { task: Task; topic: string };
 const share = (n: number, total: number) => (total ? n / total : 0);
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
-export function checkBalance(module: string, topics: string[], items: Placed[]): string[] {
+export function checkBalance(module: string, topics: string[], items: Placed[], target = BALANCE.perModule): string[] {
   const errors: string[] = [];
   const fail = (text: string) => errors.push(`баланс ${module}: ${text}`);
   const total = items.length;
 
-  if (total < BALANCE.perModule) fail(`заданий ${total}, нужно не меньше ${BALANCE.perModule}`);
+  if (total < target) fail(`заданий ${total}, нужно не меньше ${target}`);
   for (const topic of topics) {
     const n = items.filter((i) => i.topic === topic).length;
     if (n < BALANCE.perTopic) fail(`в теме ${topic} заданий ${n}, нужно не меньше ${BALANCE.perTopic}`);

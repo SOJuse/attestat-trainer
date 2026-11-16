@@ -94,7 +94,15 @@ export const Topic = z
   .strict();
 export type Topic = z.infer<typeof Topic>;
 
-const ModuleTopics = z.object({ title: z.string().min(1), ready: z.boolean(), topics: z.array(Topic) }).strict();
+const ModuleTopics = z
+  .object({
+    title: z.string().min(1),
+    ready: z.boolean(),
+    /** сколько заданий должно быть в готовом модуле; по умолчанию 60, меньше — только по решению заказчика */
+    target: z.number().int().min(40).max(60).optional(),
+    topics: z.array(Topic),
+  })
+  .strict();
 export const Topics = z
   .object({ modules: z.object({ K: ModuleTopics, R: ModuleTopics, P: ModuleTopics, Rez: ModuleTopics, I: ModuleTopics }).strict() })
   .strict();

@@ -29,16 +29,16 @@ export function blind(item: Raw): Raw {
   return out;
 }
 
-export function blindModule(root: string, module: string): string {
+export function blindModule(root: string, module: string, topic?: string): string {
   const { tasks, cases, cards } = loadTasks(root);
   const topics = loadTopics(root).modules[module as (typeof MODULE_CODES)[number]].topics;
   const norms = (topic: string) => topics.find((t) => t.id === topic)?.docs ?? [];
   const doc = {
     tasks: tasks
-      .filter((t) => t.module === module)
+      .filter((t) => t.module === module && (!topic || t.topic === topic))
       .map((t) => ({ ...blind(t), topic: t.topic, norms: norms(t.topic) })),
     cases: cases
-      .filter((c) => c.module === module)
+      .filter((c) => c.module === module && (!topic || c.topic === topic))
       .map((c) => ({
         id: c.id,
         title: c.title,
@@ -47,19 +47,28 @@ export function blindModule(root: string, module: string): string {
         steps: (c.steps as Raw[]).map((s, i) => ({ ...blind(s), id: `${String(c.id)}#${i + 1}` })),
       })),
     cards: cards
-      .filter((c) => c.module === module)
+      .filter((c) => c.module === module && (!topic || c.topic === topic))
       .map((c) => ({ id: c.id, front: c.front, norms: norms(String(c.topic)) })),
   };
   return stringify(doc, { lineWidth: 110 });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [root, out] = process.argv.slice(2);
-  if (!root || !out) {
-    console.error('использование: tsx src/blind.ts <корень репозитория> <папка для файлов>');
+  // tsx src/blind.ts <модуль> [тема] --out <папка> [--root <корень>]
+  const args = process.argv.slice(2);
+  const flag = (name: string, fallback?: string) => {
+    const i = args.indexOf(`--${name}`);
+    return i >= 0 ? args[i + 1] : fallback;
+  };
+  const positional = args.filter((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
+  const [module, topic] = positional;
+  const out = flag('out');
+  if (!module || !out || !(MODULE_CODES as readonly string[]).includes(module)) {
+    console.error('использование: npm run blind -- <модуль> [тема] --out <папка>');
     process.exit(2);
   }
   mkdirSync(out, { recursive: true });
-  for (const module of MODULE_CODES) writeFileSync(join(out, `${module}.yaml`), blindModule(root, module));
-  console.log(`файлы для слепой проверки: ${out}`);
+  const file = join(out, topic ? `${module}-${topic}.yaml` : `${module}.yaml`);
+  writeFileSync(file, blindModule(flag('root', '..')!, module, topic));
+  console.log(`файл для слепой проверки: ${file}`);
 }
