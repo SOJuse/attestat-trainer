@@ -16,7 +16,8 @@ export class LibraryError extends Error {
   }
 }
 
-export type TextStatus = 'full' | 'missing' | 'bibliographic';
+/** ocr — полный текст, распознанный со скана: в нём возможны ошибки распознавания. */
+export type TextStatus = 'full' | 'ocr' | 'missing' | 'bibliographic';
 
 export type DocInfo = {
   id: string;

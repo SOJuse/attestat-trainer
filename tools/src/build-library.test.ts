@@ -69,6 +69,21 @@ describe('buildLibrary', () => {
     expect(hits).toEqual([]);
   });
 
+  it('распознанный со скана документ проходит проверку как текст и помечен в базе', () => {
+    const report = validateCorpus('src/fixtures/ocr');
+    expect(report.errors).toEqual([]);
+    expect(report.stats.ocr).toBe(1);
+    const dir = mkdtempSync(join(tmpdir(), 'lib-'));
+    buildLibrary({ root: 'src/fixtures/ocr', out: dir, build: 1, date: new Date('2026-11-20T10:00:00Z') });
+    const ocrDb = new Database(gunzipSync(readFileSync(join(dir, 'library.sqlite.gz'))));
+    expect(ocrDb.prepare("SELECT text_status FROM docs WHERE id = 'prikaz-373'").get()).toEqual({ text_status: 'ocr' });
+    expect(ocrDb.prepare('SELECT count(*) AS n FROM sections').get()).toEqual({ n: 3 });
+  });
+
+  it('распознанный документ без text.md — ошибка', () => {
+    expect(validateCorpus('src/fixtures/ocr-empty').errors.join(' ')).toMatch(/text\.md нет/);
+  });
+
   it('манифест описывает именно этот файл', () => {
     const gz = readFileSync(join(out, 'library.sqlite.gz'));
     expect(manifest.schemaVersion).toBe(1);

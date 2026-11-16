@@ -123,7 +123,13 @@ function ReaderInner({ library, docId, anchor, onBack, openExternal }: Props) {
         )}
       </div>
 
-      {info.textStatus !== 'full' && (
+      {info.textStatus === 'ocr' && (
+        <p className="reader__absent">
+          Текст распознан со скана официальной публикации. В нём могут быть ошибки, чаще всего в числах
+          и номерах пунктов: перед тем как на него опираться, сверяйте с источником.
+        </p>
+      )}
+      {info.textStatus !== 'full' && info.textStatus !== 'ocr' && (
         <p className="reader__absent">
           Текста этого документа в библиотеке нет: в действующей редакции его не удалось получить из
           официального источника.{info.note ? ` ${info.note}` : ''}

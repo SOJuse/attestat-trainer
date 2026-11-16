@@ -34,6 +34,7 @@ import time
 
 import yaml
 
+from ocr import ocr_pages
 from pub_text import html_paragraphs, pdf_paragraphs, squeeze, to_markdown, to_sections
 
 BASE = "http://publication.pravo.gov.ru/"
@@ -42,6 +43,13 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTM
 ROOT = pathlib.Path("content/docs")
 CACHE = pathlib.Path("/tmp/claude-501/pub/pdf")
 PAUSE = 1.2
+OCR = False  # включается флагом --ocr: распознавать сканы
+OCR_MAX_PAGES = 250  # длиннее — не распознаём (санитарные правила на тысячу страниц)
+OCR_NOTE = (
+    "Текст распознан со скана официального опубликования (publication.pravo.gov.ru). "
+    "В нём возможны ошибки распознавания, особенно в числах: цитату сверяйте со сканом по ссылке на источник. "
+    "Позднейшие изменения в текст не внесены."
+)
 MAX_FULL_PDF = 40_000_000  # больше — смотрим только начало файла: есть ли в нём шрифты
 PROBE_BYTES = 4_000_000
 NOTE = "Текст официального опубликования. Позднейшие изменения в него не внесены."
@@ -244,6 +252,12 @@ def pdf_text(doc):
         page_texts = page_texts[:-1]
     letters = re.findall(r"[^\W\d_]", text)
     if len(letters) < 100 * max(1, pages) * 0.3:
+        if OCR and pages <= OCR_MAX_PAGES:
+            texts, total, doubtful = ocr_pages(path, eo, pages)
+            low = sum(len(d) for d in doubtful)
+            if total < 100 * pages * 0.3:
+                return "scan", f"скан не распознался: {pages} стр., слов {total}"
+            return "ocr", (texts, total, low)
         return "scan", f"скан без текстового слоя: {pages} стр., букв в текстовом слое {len(letters)}"
     cyr = sum(1 for ch in letters if "а" <= ch.lower() <= "я" or ch.lower() == "ё")
     if cyr / len(letters) < 0.7 or text.count("�") > 20:
@@ -385,8 +399,14 @@ def fetch(entry):
         ref += f", на портале № {doc['number']}"
     status, got = pdf_text(doc)
     source_url, edition, note, text_from = f"{BASE}document/{doc['eoNumber']}", entry["date"], NOTE, "pdf"
+    ocr_stat = None
     if status == "text":
         paras = pdf_paragraphs(got)
+    elif status == "ocr":
+        texts, total, low = got
+        paras = pdf_paragraphs(texts)
+        ocr_stat = f"слов {total}, под сомнением {low} ({low / max(total, 1):.1%})"
+        note, text_from = f"{OCR_NOTE} При распознавании: {ocr_stat}.", "ocr"
     elif entry["kind"] == "government":
         gov = gov_doc(entry)
         if not gov:
@@ -435,7 +455,7 @@ def fetch(entry):
         "source_url": source_url,
         "fetched": datetime.date.today().isoformat(),
         "modules": entry["modules"],
-        "text": "full",
+        "text": "ocr" if ocr_stat else "full",
     }
     if edition == entry["date"]:
         meta["edition_status"] = "original"
@@ -465,7 +485,12 @@ def main():
     a.add_argument("--ids", default="", help="только эти документы, через запятую")
     a.add_argument("--limit", type=int, default=0)
     a.add_argument("--report", default="")
+    for cmd in (f, a):
+        cmd.add_argument("--ocr", action="store_true", help="распознавать сканы без текстового слоя")
     args = ap.parse_args()
+
+    global OCR
+    OCR = bool(getattr(args, "ocr", False))
 
     if args.cmd == "search":
         for d in search(args.number, args.date):

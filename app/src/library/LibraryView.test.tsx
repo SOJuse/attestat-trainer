@@ -212,6 +212,22 @@ describe('LibraryView: чтение', () => {
     expect(lib.sections).toHaveBeenLastCalledWith('tk-rf', 255, 30);
   });
 
+  it('у распознанного со скана документа есть предупреждение, текст при этом показан', async () => {
+    const scanned = info({ id: 'prikaz-373', title: 'Порядок дошкольного образования', short: null, textStatus: 'ocr', listNo: 100 });
+    const lib = library({
+      list: async () => [scanned],
+      doc: async () => ({ info: scanned, sections: [{ anchor: 'st-1', heading: 'Статья 1. Заголовок', ord: 0 }] }),
+    });
+    render(<LibraryView library={lib} openExternal={async () => {}} />);
+    const item = await screen.findByRole('button', { name: /Порядок дошкольного образования/ });
+    expect(item).toHaveTextContent('распознан со скана');
+    await userEvent.click(item);
+    expect(await screen.findByText(/Текст распознан со скана/)).toBeInTheDocument();
+    expect(screen.getByText(/сверяйте с источником/)).toBeInTheDocument();
+    expect(await screen.findByText('Текст статьи 1.')).toBeInTheDocument();
+    expect(screen.queryByText(/Текста этого документа в библиотеке нет/)).not.toBeInTheDocument();
+  });
+
   it('документ без текста объясняет, почему его нет', async () => {
     render(<LibraryView library={library()} openExternal={async () => {}} />);
     await userEvent.click(await screen.findByRole('button', { name: /Письмо заместителя/ }));

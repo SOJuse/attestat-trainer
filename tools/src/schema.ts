@@ -72,7 +72,8 @@ export const DocMeta = z
     fetched: IsoDate.optional(),
     modules: z.array(ModuleCode),
     list_no: z.number().int().positive().optional(),
-    text: z.enum(['full', 'missing', 'bibliographic']),
+    // ocr — полный текст, распознанный со скана: возможны ошибки распознавания
+    text: z.enum(['full', 'ocr', 'missing', 'bibliographic']),
     // current — действующая сводная редакция; original — текст официальной публикации,
     // более поздние изменения в него не внесены (их перечисляет amended_by)
     edition_status: z.enum(['current', 'original']).optional(),

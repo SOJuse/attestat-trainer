@@ -103,7 +103,10 @@ export function DocBrowser({ library, onOpen }: Props) {
               <li key={d.id}>
                 <button type="button" className="doc" onClick={() => onOpen(d.id)}>
                   <span className="doc__title">{d.short ? `${d.short}. ${d.title}` : d.title}</span>
-                  {d.textStatus !== 'full' && <span className="doc__status">без текста</span>}
+                  {d.textStatus === 'ocr' && <span className="doc__status">распознан со скана</span>}
+                  {d.textStatus !== 'full' && d.textStatus !== 'ocr' && (
+                    <span className="doc__status">без текста</span>
+                  )}
                 </button>
               </li>
             ))}

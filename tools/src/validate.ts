@@ -24,7 +24,7 @@ function hostAllowed(url: string): boolean {
 export function validateCorpus(root: string): Report {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const stats = { registry: 0, full: 0, missing: 0, bibliographic: 0, absent: 0 };
+  const stats = { registry: 0, full: 0, ocr: 0, missing: 0, bibliographic: 0, absent: 0 };
 
   let registry;
   try {
@@ -66,9 +66,9 @@ export function validateCorpus(root: string): Report {
     if (meta.source_url && !hostAllowed(meta.source_url)) {
       errors.push(`${where} источник не из разрешённого списка: ${meta.source_url}`);
     }
-    if (meta.text === 'full') {
+    if (meta.text === 'full' || meta.text === 'ocr') {
       if (!existsSync(join(root, 'content', 'docs', entry.id, 'text.md'))) {
-        errors.push(`${where} text: full, а файла text.md нет`);
+        errors.push(`${where} text: ${meta.text}, а файла text.md нет`);
         continue;
       }
       if (!meta.source_url) errors.push(`${where} у полного текста не указан source_url`);
@@ -91,7 +91,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const report = validateCorpus(process.argv[2] ?? '..');
   const s = report.stats;
   console.log(
-    `реестр: ${s.registry}, полный текст: ${s.full}, без текста: ${s.missing}, ` +
+    `реестр: ${s.registry}, полный текст: ${s.full}, распознано со скана: ${s.ocr}, без текста: ${s.missing}, ` +
       `только запись: ${s.bibliographic}, не собрано: ${s.absent}`,
   );
   report.warnings.forEach((w) => console.log('предупреждение:', w));
