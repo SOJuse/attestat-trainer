@@ -3,6 +3,7 @@ import { Placeholder } from './components/Placeholder';
 import { SettingsView } from './components/SettingsView';
 import { Sidebar } from './components/Sidebar';
 import { UpdateBanner } from './components/UpdateBanner';
+import { ExamView } from './exam/ExamView';
 import { LibraryView, type OpenAt } from './library/LibraryView';
 import type { Platform } from './platform/Platform';
 import { sectionTitle, type SectionId } from './sections';
@@ -51,7 +52,7 @@ export default function App({ platform }: { platform: Platform }) {
         <AppDataProvider platform={platform}>
           {pane('today', <TodayView onOpenLibrary={openLibrary} openExternal={platform.openExternal} />)}
           {pane('training', <TrainingView onOpenLibrary={openLibrary} openExternal={platform.openExternal} />)}
-          {pane('exam', <Placeholder title={sectionTitle('exam')} />)}
+          {pane('exam', <ExamView library={platform.library} openExternal={platform.openExternal} />)}
           {pane('cards', <Placeholder title={sectionTitle('cards')} />)}
           {pane('progress', <Placeholder title={sectionTitle('progress')} />)}
         </AppDataProvider>

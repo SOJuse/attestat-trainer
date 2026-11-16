@@ -604,6 +604,144 @@ button {
   background: var(--softer);
 }
 
+/* ---------- экзамен ---------- */
+
+.exam {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.exam__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.exam__main .view {
+  flex: none;
+  overflow: visible;
+  padding-top: 16px;
+}
+
+.exam__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  padding: 12px 40px;
+  border-bottom: 1px solid var(--line);
+}
+
+.exam__timer {
+  margin-right: auto;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam__timer--low {
+  color: var(--bad-text);
+}
+
+.exam__confirm {
+  margin: 12px 40px 0;
+}
+
+.exam__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px 40px 0;
+}
+
+.exam__num {
+  min-width: 34px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.exam__num[data-answered] {
+  background: var(--soft);
+  border-color: var(--soft);
+}
+
+.exam__num[aria-current='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.exam__step {
+  display: flex;
+  gap: 10px;
+  padding: 0 40px 32px;
+}
+
+.exam__library {
+  flex: 0 0 42%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+}
+
+.exam__library .view {
+  padding: 20px 24px;
+}
+
+.view .protocol__verdict {
+  margin: 8px 0 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 30px;
+}
+
+.protocol__verdict--pass {
+  color: var(--ok-text);
+}
+
+.protocol__verdict--fail {
+  color: var(--bad-text);
+}
+
+.table {
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 6px 24px 6px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+
+.table thead th {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mistake {
+  max-width: 70ch;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mistake h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
 /* ---------- библиотека ---------- */
 
 .install {

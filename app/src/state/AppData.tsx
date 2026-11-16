@@ -27,7 +27,8 @@ export type AppData = {
   answer: (a: { id: string; revision: number; correct: boolean; mode: Mode }) => void;
   hide: (id: string) => void;
   setDraft: (draft: Draft | undefined) => void;
-  recordExam: (record: ExamRecord) => void;
+  /** Завершает экзамен одной записью: ответы, строка истории, черновик снят. */
+  finishExam: (record: ExamRecord, answers: { id: string; revision: number; correct: boolean }[]) => void;
   setSettings: (settings: UserData['settings']) => void;
   replaceData: (data: UserData) => void;
 };
@@ -178,7 +179,15 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
           else delete next.draft;
           return next;
         }),
-      recordExam: (record: ExamRecord) => change((d) => ({ ...d, exams: [...d.exams, record] })),
+      finishExam: (record: ExamRecord, answers: { id: string; revision: number; correct: boolean }[]) =>
+        change((d) => {
+          const at = now();
+          let next = d;
+          for (const a of answers) next = applyAnswer(next, { ...a, mode: 'exam', now: at });
+          next = { ...next, exams: [...next.exams, record] };
+          delete next.draft;
+          return next;
+        }),
       setSettings: (settings: UserData['settings']) => change((d) => ({ ...d, settings })),
       replaceData: (data: UserData) => change(() => data),
     }),
