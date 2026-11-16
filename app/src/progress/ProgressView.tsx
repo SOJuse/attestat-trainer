@@ -28,12 +28,12 @@ export function ProgressView({ onTrain, onOpenLibrary }: Props) {
   const stats = useMemo(() => topicStats(pack, data), [pack, data]);
   const answered = stats.some((s) => s.answered > 0);
   const exams = [...data.exams].reverse();
-  const docOf = (module: (typeof MODULE_CODES)[number], topic: string) => pack.modules[module].topics.find((t) => t.id === topic)?.doc;
+  const docOf = (module: string, topic: string) => pack.topicDocs[`${module}/${topic}`];
 
   return (
     <section className="view">
       <h1>Прогресс</h1>
-      {chance !== null && <p>Шанс пройти порог сегодня: около {Math.round(chance * 100)}%.</p>}
+      {chance !== null && <p>Шанс сдать тест сегодня: около {Math.round(chance * 100)}%.</p>}
 
       {!answered ? (
         <p>Здесь появится статистика после первых ответов: точность по темам и слабые места.</p>
@@ -76,7 +76,7 @@ export function ProgressView({ onTrain, onOpenLibrary }: Props) {
                       <td>
                         {s.seen} из {s.total}
                       </td>
-                      <td>
+                      <td className="progress__actions">
                         {s.total > 0 && (
                           <button
                             type="button"

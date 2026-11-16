@@ -67,8 +67,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.error('использование: npm run blind -- <модуль> [тема] --out <папка>');
     process.exit(2);
   }
+  const root = flag('root', '..')!;
+  if (topic && !loadTopics(root).modules[module as (typeof MODULE_CODES)[number]].topics.some((t) => t.id === topic)) {
+    console.error(`в модуле ${module} нет темы ${topic}`);
+    process.exit(2);
+  }
   mkdirSync(out, { recursive: true });
   const file = join(out, topic ? `${module}-${topic}.yaml` : `${module}.yaml`);
-  writeFileSync(file, blindModule(flag('root', '..')!, module, topic));
+  writeFileSync(file, blindModule(root, module, topic));
   console.log(`файл для слепой проверки: ${file}`);
 }

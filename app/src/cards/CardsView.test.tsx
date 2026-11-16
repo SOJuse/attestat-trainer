@@ -105,7 +105,7 @@ describe('ProgressView', () => {
 
   it('у слабой темы есть ссылка на норму, она открывает библиотеку на опорном разделе', async () => {
     const { d, pack } = answered();
-    pack.modules.K.topics[0] = { ...pack.modules.K.topics[0], doc: { id: 'tk-rf', anchor: 'st-114' } };
+    pack.topicDocs = { 'K/a': { id: 'tk-rf', anchor: 'st-114' } };
     const onOpenLibrary = vi.fn();
     mount(<ProgressView onTrain={() => {}} onOpenLibrary={onOpenLibrary} />, pack, createFakeStore(JSON.stringify(d)));
     await userEvent.click(await screen.findByRole('button', { name: 'Открыть норму по теме «K: тема А»' }));

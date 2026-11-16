@@ -13,7 +13,7 @@ import pathlib
 import re
 import sys
 
-from pub_text import CONTINUES
+from pub_text import CONTINUES, SECTION_TITLE_OCR
 
 HEAD = re.compile(r"^## \{#([^}]+)\} (.*)$")
 RAZDEL = re.compile(r"^(.*?)razdel-(\d+)(-dup\d+)?$")
@@ -52,9 +52,19 @@ def render(sections):
 def mend(markdown):
     """Возвращает (новый текст, {старый якорь: новый якорь})."""
     sections = parse(markdown)
-    out, moved, fake = [], {}, {}
+    out, moved, fake, orphans = [], {}, {}, []
     for anchor, heading, context, paras in sections:
         is_tail = RAZDEL.match(anchor) and paras and CONTINUES.match(paras[0]) and out
+        if is_tail and SECTION_TITLE_OCR.match(heading):
+            # настоящий заголовок раздела в две строки: вторая строка достраивает название
+            full = f"{heading} {paras[0]}"
+            fake[heading] = full
+            if paras[1:]:
+                out.append([anchor, full, context, paras[1:]])
+            else:
+                # под заголовком сразу идут пункты: отдельного раздела нет, якорь переходит к первому пункту
+                orphans.append(anchor)
+            continue
         if is_tail:
             prev = out[-1]
             prev[3].append(f"{heading} {paras[0]}")
@@ -65,6 +75,9 @@ def mend(markdown):
         if context in fake:
             context = fake[context]
         out.append([anchor, heading, context, paras])
+        for orphan in orphans:
+            moved[orphan] = anchor
+        orphans = []
 
     # оставшиеся разделы без номера нумеруются заново, как их пронумеровал бы разбор
     counters = {}
@@ -79,6 +92,8 @@ def mend(markdown):
             moved[section[0]] = new
             section[0] = new
     # хвост мог уйти в раздел, который затем сам получил новый номер
+    for orphan in orphans:
+        moved[orphan] = out[-1][0]
     tails = {old: target for old, target in moved.items() if RAZDEL.match(old) and old not in {s[0] for s in out}}
     renamed = {old: new for old, new in moved.items()}
     for old, target in tails.items():
@@ -123,7 +138,9 @@ def main(write):
                 doc["anchors"] = new
     print(f"якорей в topics.yaml к замене: {touched}")
     if write and touched:
-        header = "".join(line for line in topics.splitlines(keepends=True) if line.startswith("#"))
+        lines = topics.splitlines(keepends=True)
+        first = next(i for i, line in enumerate(lines) if not line.startswith("#"))
+        header = "".join(lines[:first])
         topics_path.write_text(header + yaml.safe_dump(data, allow_unicode=True, sort_keys=False, width=110), encoding="utf-8")
     return renames
 

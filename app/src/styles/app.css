@@ -820,6 +820,10 @@ button {
   font-weight: 400;
 }
 
+.progress__actions .link + .link {
+  margin-left: 16px;
+}
+
 .progress__weak {
   color: var(--bad-text);
 }

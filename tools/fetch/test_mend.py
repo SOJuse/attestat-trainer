@@ -65,6 +65,29 @@ class MendTest(unittest.TestCase):
         self.assertEqual([s[0] for s in parse(mended)], ["p-1", "razdel-1"])
         self.assertEqual(moved, {"razdel-1": "p-1", "razdel-2": "razdel-1", "razdel-3": "razdel-1"})
 
+    def test_two_line_section_title_is_rebuilt_not_glued_to_the_point(self):
+        text = (
+            "## {#pril-1-p-44} Пункт 44\n\n> Ш. Первая и высшая категории\n\n44. Категории сохраняются.\n\n"
+            "## {#pril-1-razdel-1} ГУ. Аттестация в целях установления\n\nкатегории «педагог-методист»\n\n"
+            "## {#pril-1-p-45} Пункт 45\n\n> ГУ. Аттестация в целях установления\n\n45. Аттестация проводится по желанию.\n"
+        )
+        mended, moved = mend(text)
+        sections = {s[0]: s for s in parse(mended)}
+        self.assertEqual(sections["pril-1-p-44"][3], ["44. Категории сохраняются."])
+        self.assertEqual(sections["pril-1-p-45"][2], "ГУ. Аттестация в целях установления категории «педагог-методист»")
+        self.assertEqual(moved, {"pril-1-razdel-1": "pril-1-p-45"})
+
+    def test_two_line_title_with_text_under_it_stays_a_section(self):
+        text = (
+            "## {#p-1} Пункт 1\n\n1. Текст.\n\n"
+            "## {#razdel-1} III. Особенности проведения\n\nдля лиц с ограниченными возможностями\n\nРаздел применяется с сентября.\n"
+        )
+        mended, moved = mend(text)
+        sections = parse(mended)
+        self.assertEqual(sections[1][:2], ["razdel-1", "III. Особенности проведения для лиц с ограниченными возможностями"])
+        self.assertEqual(sections[1][3], ["Раздел применяется с сентября."])
+        self.assertEqual(moved, {})
+
     def test_clean_text_is_untouched(self):
         clean = "## {#p-1} Пункт 1\n\n1. Текст.\n"
         text, moved = mend(clean)
@@ -101,6 +124,22 @@ class SplitTest(unittest.TestCase):
         ]
         anchors = [s[0] for s in to_sections(paras)]
         self.assertIn("pril-1-razdel-1", anchors)
+
+
+
+class TwoLineTitleTest(unittest.TestCase):
+    def test_second_line_of_section_title_extends_the_title(self):
+        paras = [
+            ("stamp", "УТВЕРЖДЕН приказом"),
+            ("title", "ПОРЯДОК"),
+            ("", "1. Первый пункт."),
+            ("title", "IV. Аттестация в целях установления"),
+            ("", "категории «педагог-методист»"),
+            ("", "2. Второй пункт."),
+        ]
+        sections = {s[0]: s for s in to_sections(paras)}
+        self.assertEqual(sections["pril-1-p-1"][2], ["1. Первый пункт."])
+        self.assertEqual(sections["pril-1-p-2"][3], "IV. Аттестация в целях установления категории «педагог-методист»")
 
 
 if __name__ == "__main__":

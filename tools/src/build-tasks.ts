@@ -43,6 +43,29 @@ export function buildTasks({ root, out, build, date = new Date(), pilot, packVer
       return meta ? [[id, { title: meta.short ?? meta.title, ocr: meta.text === 'ocr' }]] : [];
     }),
   );
+  // Главный раздел нормы для темы: тот, на который чаще всего ссылаются её задания;
+  // пока заданий нет, первый раздел первого документа темы с текстом.
+  const topicDocs: Record<string, { id: string; anchor: string }> = {};
+  for (const m of MODULE_CODES) {
+    for (const t of topics.modules[m].topics) {
+      const counts = new Map<string, number>();
+      for (const task of tasks.filter((x) => x.module === m && x.topic === t.id)) {
+        for (const ref of (task.refs as { doc: string; anchor: string }[] | undefined) ?? []) {
+          const key = `${ref.doc} ${ref.anchor}`;
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        }
+      }
+      const top = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+      if (top) {
+        const [id, anchor] = top[0].split(' ');
+        topicDocs[`${m}/${t.id}`] = { id, anchor };
+        continue;
+      }
+      const first = t.docs.find((d) => (d.anchors?.length ?? 0) > 0 && loadDoc(root, d.doc));
+      if (first) topicDocs[`${m}/${t.id}`] = { id: first.doc, anchor: first.anchors![0] };
+    }
+  }
+
   const pack = {
     schemaVersion: TASKS_SCHEMA,
     packVersion: packVersion ?? `${date.getUTCFullYear()}.${pad(date.getUTCMonth() + 1)}.${pad(date.getUTCDate())}.${build}`,
@@ -50,13 +73,10 @@ export function buildTasks({ root, out, build, date = new Date(), pilot, packVer
     modules: Object.fromEntries(
       MODULE_CODES.map((m) => {
         const info = topics.modules[m];
-        return [m, { title: info.title, ready: info.ready, topics: info.topics.map((t) => {
-          // первый раздел первого документа темы, у которого есть текст
-          const first = t.docs.find((d) => (d.anchors?.length ?? 0) > 0 && loadDoc(root, d.doc));
-          return first ? { id: t.id, title: t.title, doc: { id: first.doc, anchor: first.anchors![0] } } : { id: t.id, title: t.title };
-        }) }];
+        return [m, { title: info.title, ready: info.ready, topics: info.topics.map((t) => ({ id: t.id, title: t.title })) }];
       }),
     ),
+    topicDocs,
     docs,
     tasks: [...tasks].sort(byId).map((t) => without(t, ['file'])),
     cases: [...cases].sort(byId).map((c) => without(c, ['file'])),

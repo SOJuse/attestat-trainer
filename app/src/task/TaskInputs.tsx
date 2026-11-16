@@ -14,6 +14,19 @@ export function shuffled(n: number, random: () => number): number[] {
   return order;
 }
 
+/**
+ * Перемешивание для задания на порядок: начальная расстановка не должна оказаться верной,
+ * иначе ответ засчитается без единого действия. Если перемешать не вышло, шаги сдвигаются по кругу.
+ */
+export function shuffledAway(n: number, random: () => number): number[] {
+  if (n < 2) return shuffled(n, random);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const order = shuffled(n, random);
+    if (order.some((x, i) => x !== i)) return order;
+  }
+  return Array.from({ length: n }, (_, i) => (i + 1) % n);
+}
+
 /** Пустой ответ для задания; у «порядка» это начальная расстановка шагов. */
 export function emptyAnswer(task: Gradable, order: number[]): Answer {
   switch (task.type) {

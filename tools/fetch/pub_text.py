@@ -31,6 +31,8 @@ STAMP = re.compile(r"^(УТВЕРЖДЕН[АЫО]?|Утвержден[аыо]?|�
 # гриф с номером («Приложение № 2 к приказу») открывает новое приложение даже сразу после другого грифа
 STAMP_NUMBERED = re.compile(r"^(ПРИЛОЖЕНИЕ|Приложение)\s*(№|N)?\s*\d")
 SECTION_TITLE = re.compile(r"^([IVXLC]+\.\s|Глава\s|ГЛАВА\s|Раздел\s|РАЗДЕЛ\s)")
+# то же с поправкой на распознавание: римские цифры читаются как «Ш», «П», «ГУ», «1»
+SECTION_TITLE_OCR = re.compile(r"^(?:[IVXХШПУГЛ1]{1,6}\.\s+[А-ЯЁ]|Раздел\s|РАЗДЕЛ\s|Глава\s|ГЛАВА\s)")
 LIST_START = re.compile(r"^(\d+(\.\d+)*\.(\s|$)|\d+(\.\d+)*\)\s|[а-яё]\)\s|[–—•]\s|\d+\.\d+(\.\d+)*\s)")
 PAGE_NUMBER = re.compile(r"^[-–—]?\s*\d{1,4}\s*[-–—]?$")
 # колонтитул с шифром документа внизу страницы скана: «Порядок - 03», «©б утверждении Порядка — 03»
@@ -441,6 +443,10 @@ def to_sections(paras):
                 st["context"], st["fresh"] = text, True
                 continue
         st["title_open"] = False
+        if st["fresh"] and not is_point and CONTINUES.match(text) and SECTION_TITLE_OCR.match(st["context"]):
+            # заголовок раздела в две строки: вторая строка достраивает название
+            st["context"] = f"{st['context']} {text}"
+            continue
         if st["fresh"] and not is_point and CONTINUES.match(text):
             # «название» оказалось строкой абзаца, которую распознавание приняло за строку по центру:
             # текст продолжается со строчной буквы, значит, это хвост предыдущего пункта

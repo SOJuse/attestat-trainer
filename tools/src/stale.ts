@@ -30,6 +30,33 @@ export function staleTasks(root: string): { id: string; doc: string; checked: st
   return out;
 }
 
+/**
+ * Задания, которые ссылаются на текст в исходной редакции с позднейшими поправками.
+ * Числа и сроки из такого текста брать нельзя; скрипт этого не понимает и только показывает,
+ * какие задания проверяющему нужно посмотреть особо.
+ */
+export function originalEditionRefs(root: string): { id: string; doc: string }[] {
+  const { tasks, cases, cards } = loadTasks(root);
+  const amended = new Map<string, boolean>();
+  const isAmended = (doc: string) => {
+    if (!amended.has(doc)) {
+      const meta = loadDoc(root, doc)?.meta;
+      amended.set(doc, meta?.edition_status === 'original' && (meta.amended_by?.length ?? 0) > 0);
+    }
+    return amended.get(doc)!;
+  };
+  const out: { id: string; doc: string }[] = [];
+  const check = (id: string, refs: unknown) => {
+    for (const doc of new Set(((refs as { doc: string }[] | undefined) ?? []).map((r) => r.doc))) {
+      if (isAmended(doc)) out.push({ id, doc });
+    }
+  };
+  for (const t of tasks) check(String(t.id), t.refs);
+  for (const c of cases) ((c.steps as Raw[] | undefined) ?? []).forEach((s, i) => check(`${String(c.id)}#${i + 1}`, s.refs));
+  for (const c of cards) check(String(c.id), c.refs);
+  return out;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const stale = staleTasks(process.argv[2] ?? '..');
   for (const s of stale) console.log(`${s.id}: документ ${s.doc} обновлён ${s.fetched}, задание сверено ${s.checked}`);

@@ -160,10 +160,10 @@ export function TodayView({ onOpenLibrary, openExternal }: Props) {
       {allReady ? (
         chance !== null ? (
           <>
-            <div className="bar" role="img" aria-label={`Шанс пройти порог: около ${Math.round(chance * 100)}%`}>
+            <div className="bar" role="img" aria-label={`Шанс сдать тест: около ${Math.round(chance * 100)}%`}>
               <i style={{ width: `${Math.round(chance * 100)}%` }} />
             </div>
-            <p>Шанс пройти порог: около {Math.round(chance * 100)}%.</p>
+            <p>Шанс сдать тест: около {Math.round(chance * 100)}%.</p>
           </>
         ) : (
           <p>Прогноз появится, когда в каждом модуле наберётся 30 ответов.</p>

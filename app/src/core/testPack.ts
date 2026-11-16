@@ -24,6 +24,7 @@ export function makePack(perModule: number, over: Partial<TasksPack> = {}): Task
     pilot: false,
     modules: { K: info('K'), R: info('R'), P: info('P'), Rez: info('Rez'), I: info('I') },
     docs: {},
+    topicDocs: {},
     tasks,
     cases: [],
     cards: [],

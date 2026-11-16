@@ -47,3 +47,13 @@ describe('устаревшие сверки', () => {
     expect(stale).toEqual([{ id: 'K-otpuska-001', doc: 'tk-rf', checked: '2026-11-18', fetched: '2026-12-01' }]);
   });
 });
+
+describe('ссылки на исходные редакции', () => {
+  it('в настоящей базе названы задания, которые опираются на текст с поправками', async () => {
+    const { originalEditionRefs } = await import('./stale');
+    const refs = originalEditionRefs('..');
+    // пробные задания «Результатов» по порядку ГИА-9 стоят на исходной редакции или нет: список не должен падать
+    expect(Array.isArray(refs)).toBe(true);
+    for (const r of refs) expect(r.id).toMatch(/^(K|R|P|Rez|I)-/);
+  });
+});

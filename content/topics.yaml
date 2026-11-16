@@ -623,6 +623,7 @@ modules:
         - pril-1-p-1
         - pril-1-razdel-1
         - pril-1-razdel-2
+        - pril-1-razdel-3
       - doc: fz-273
         anchors:
         - st-41
@@ -1039,6 +1040,7 @@ modules:
         anchors:
         - pril-1-p-1
         - pril-1-razdel-2
+        - pril-1-razdel-3
       - doc: tk-rf
         anchors:
         - st-76
