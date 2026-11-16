@@ -1,3 +1,4 @@
+import { focusOnOpen } from '../components/focus';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildExam, buildMiniTest, remainingSeconds, scoreExam, type ExamScore } from '../core/exam';
 import { EXAM, MINI } from '../core/examConfig';
@@ -192,7 +193,7 @@ function ExamRun({ draft, library, openExternal, onDone }: RunProps) {
         </div>
 
         {confirming && (
-          <div className="confirm exam__confirm" role="alertdialog" aria-label="Подтверждение">
+          <div className="confirm exam__confirm" role="alertdialog" tabIndex={-1} ref={focusOnOpen} aria-label="Подтверждение">
             <p>Без ответа осталось заданий: {unanswered}. Они будут засчитаны как неверные.</p>
             <div className="task__actions">
               <button type="button" className="button button--primary" onClick={() => finish(false)}>

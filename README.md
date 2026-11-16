@@ -97,7 +97,7 @@ npm run tauri dev
 
 Проверки: `npm run lint`, `npm run typecheck`, `npm test`, дымовой тест в браузере `npm run e2e`. Интерфейс запускается и в обычном браузере: `npm run dev`, затем `http://localhost:1420`.
 
-Релиз собирается сам, когда в репозиторий приходит тег вида `v0.3.0`. Перед этим ту же версию нужно записать в `app/package.json`, `app/src-tauri/tauri.conf.json` и `app/src-tauri/Cargo.toml`.
+Релиз собирается сам, когда в репозиторий приходит тег вида `v0.4.0`. Перед этим ту же версию нужно записать в `app/package.json`, `app/src-tauri/tauri.conf.json` и `app/src-tauri/Cargo.toml`.
 
 Задания лежат в `content/tasks`, кейсы в `content/cases`, карточки в `content/cards`. Каждое задание ссылается на норму дословной цитатой, `npm run validate` в `tools` проверяет, что цитата есть в тексте документа. Как пишутся и проверяются задания, описано в `tools/prompts`.
 

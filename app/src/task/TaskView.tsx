@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { grade, isComplete, parseNumber, type Answer } from '../core/grade';
 import type { CaseStep, Task } from '../core/taskSchema';
 import { useActiveSection } from '../state/Active';
-import { emptyAnswer, shuffled, TaskInputs } from './TaskInputs';
+import { emptyAnswer, shuffled, shuffledAway, TaskInputs } from './TaskInputs';
 
 const ISSUES = 'https://github.com/SOJuse/attestat-trainer/issues/new';
 
@@ -63,7 +63,7 @@ export function TaskView({
 }: Props) {
   const size = task.type === 'single' || task.type === 'multiple' ? task.options.length : task.type === 'sequence' ? task.items.length : task.type === 'matching' ? task.pairs.length : 0;
   // порядок показа выбирается один раз на показ задания
-  const [order] = useState(() => shuffled(size, random));
+  const [order] = useState(() => (task.type === 'sequence' ? shuffledAway(size, random) : shuffled(size, random)));
   const [answer, setAnswer] = useState<Answer>(() => initialAnswer ?? emptyAnswer(task, order));
   const [result, setResult] = useState<boolean | null>(() => (review ? initialAnswer !== undefined && grade(task, initialAnswer) : null));
   const section = useRef<HTMLElement>(null);
@@ -82,6 +82,14 @@ export function TaskView({
     setResult(correct);
     onAnswered(correct, answer);
   };
+
+  // На экзамене начальная расстановка шагов уже ответ: человек мог счесть её верной и ничего не двигать.
+  const shown = useRef(false);
+  useEffect(() => {
+    if (shown.current || mode !== 'exam' || review || task.type !== 'sequence' || initialAnswer) return;
+    shown.current = true;
+    onAnswered(grade(task, answer), answer);
+  });
 
   // состояние для обработчика клавиш без переподписки на каждое изменение
   const live = useRef({ answer, reviewed, check, change, onNext });

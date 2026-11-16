@@ -1,25 +1,39 @@
 import { useMemo } from 'react';
+import { localDate } from '../core/dates';
+import { moduleEstimate, passProbability } from '../core/forecast';
 import type { TrainingFilter } from '../core/session';
 import { topicStats } from '../core/stats';
 import { MODULE_CODES } from '../core/taskSchema';
 import { useAppData } from '../state/AppData';
 
-type Props = { onTrain: (filter: TrainingFilter) => void };
+type Props = {
+  onTrain: (filter: TrainingFilter) => void;
+  onOpenLibrary?: (at: { docId: string; anchor: string }) => void;
+};
 
 const day = (iso: string) => {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
 };
 
-export function ProgressView({ onTrain }: Props) {
-  const { pack, data } = useAppData();
+export function ProgressView({ onTrain, onOpenLibrary }: Props) {
+  const app = useAppData();
+  const { pack, data } = app;
+  const today = localDate(app.now());
+  const chance = useMemo(() => {
+    if (pack.pilot || !MODULE_CODES.every((m) => pack.modules[m].ready)) return null;
+    const estimates = MODULE_CODES.map((m) => moduleEstimate(data, pack, m, today).p);
+    return estimates.every((p) => p !== null) ? passProbability(estimates as number[]) : null;
+  }, [pack, data, today]);
   const stats = useMemo(() => topicStats(pack, data), [pack, data]);
   const answered = stats.some((s) => s.answered > 0);
   const exams = [...data.exams].reverse();
+  const docOf = (module: string, topic: string) => pack.topicDocs[`${module}/${topic}`];
 
   return (
     <section className="view">
       <h1>Прогресс</h1>
+      {chance !== null && <p>Шанс сдать тест сегодня: около {Math.round(chance * 100)}%.</p>}
 
       {!answered ? (
         <p>Здесь появится статистика после первых ответов: точность по темам и слабые места.</p>
@@ -62,7 +76,7 @@ export function ProgressView({ onTrain }: Props) {
                       <td>
                         {s.seen} из {s.total}
                       </td>
-                      <td>
+                      <td className="progress__actions">
                         {s.total > 0 && (
                           <button
                             type="button"
@@ -71,6 +85,19 @@ export function ProgressView({ onTrain }: Props) {
                             onClick={() => onTrain({ module: s.module, topic: s.topic })}
                           >
                             Тренировать
+                          </button>
+                        )}
+                        {s.weak && onOpenLibrary && docOf(s.module, s.topic) && (
+                          <button
+                            type="button"
+                            className="link"
+                            aria-label={`Открыть норму по теме «${s.title}»`}
+                            onClick={() => {
+                              const doc = docOf(s.module, s.topic)!;
+                              onOpenLibrary({ docId: doc.id, anchor: doc.anchor });
+                            }}
+                          >
+                            Открыть норму
                           </button>
                         )}
                       </td>

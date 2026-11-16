@@ -7,8 +7,22 @@ export function bundledPack(): TasksPack {
   return parseTasksPack(bundled).pack;
 }
 
-/** В браузере (разработка и автотесты) база только зашитая. */
+/** Ключ, под которым автотест кладёт в хранилище браузера свою базу вместо зашитой. */
+export const TEST_PACK_KEY = 'attestat-test-pack';
+
+/**
+ * В браузере (разработка и автотесты) база зашитая. Автотест может подложить свою,
+ * например большую: настольная версия этот источник не использует.
+ */
 export const browserTasks: TasksSource = {
-  current: async () => bundledPack(),
+  current: async () => {
+    try {
+      const override = localStorage.getItem(TEST_PACK_KEY);
+      if (override) return parseTasksPack(JSON.parse(override)).pack;
+    } catch {
+      // подложенная база не разобралась: работаем на зашитой
+    }
+    return bundledPack();
+  },
   update: async () => 'up-to-date',
 };

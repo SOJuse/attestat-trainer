@@ -1,3 +1,4 @@
+import { focusOnOpen } from '../components/focus';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   applyAnswer,
@@ -269,7 +270,7 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
           )}
         </div>
         {confirming && (
-          <div className="confirm" role="alertdialog" aria-label="Подтверждение">
+          <div className="confirm" role="alertdialog" tabIndex={-1} ref={focusOnOpen} aria-label="Подтверждение">
             <p>Прежний файл будет заменён пустым. Если копии нет, прогресс вернуть не получится.</p>
             <div className="task__actions">
               <button type="button" className="button button--primary" onClick={startOver}>

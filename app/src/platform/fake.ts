@@ -42,6 +42,7 @@ export function createFakeTasks(overrides: Partial<TasksSource> = {}): TasksSour
       pilot: true,
       modules: { K: EMPTY_MODULE, R: EMPTY_MODULE, P: EMPTY_MODULE, Rez: EMPTY_MODULE, I: EMPTY_MODULE },
       docs: {},
+      topicDocs: {},
       tasks: [],
       cases: [],
       cards: [],

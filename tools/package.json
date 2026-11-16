@@ -9,7 +9,10 @@
     "validate": "tsx src/validate.ts ..",
     "build:library": "tsx src/build-library.ts",
     "build:tasks": "tsx src/build-tasks.ts",
-    "sign:manifest": "tsx src/sign-manifest.ts"
+    "sign:manifest": "tsx src/sign-manifest.ts",
+    "blind": "tsx src/blind.ts",
+    "coverage": "tsx src/coverage.ts",
+    "stale": "tsx src/stale.ts"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

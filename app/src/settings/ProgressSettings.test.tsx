@@ -71,6 +71,7 @@ describe('перенос прогресса', () => {
     const { saved } = setup({ pickFile: async () => file });
     await userEvent.click(await screen.findByRole('button', { name: 'Загрузить прогресс из файла' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Загрузка прогресса' });
+    expect(dialog).toHaveFocus();
     expect(dialog).toHaveTextContent('3 ответа');
     expect(dialog).toHaveTextContent('1 ответ)');
     expect(saved().attempts).toHaveLength(3);
@@ -113,6 +114,7 @@ describe('сброс прогресса', () => {
     const { saved } = setup({}, { ...withAnswers(3), settings: { dailySize: 30 } });
     await userEvent.click(await screen.findByRole('button', { name: 'Сбросить прогресс' }));
     const dialog = screen.getByRole('alertdialog', { name: 'Сброс прогресса' });
+    expect(within(dialog).getByRole('textbox')).toHaveFocus();
     const confirm = within(dialog).getByRole('button', { name: 'Сбросить' });
     expect(confirm).toBeDisabled();
     await userEvent.type(within(dialog).getByRole('textbox'), 'сброс');

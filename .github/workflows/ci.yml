@@ -61,7 +61,7 @@ jobs:
       - run: npm test
       - run: npm run validate
       # разбор текстов портала: только стандартная библиотека Python
-      - run: python3 -m unittest tools/fetch/test_ips_text.py tools/fetch/test_pub_text.py tools/fetch/test_ocr.py
+      - run: python3 -m unittest tools/fetch/test_ips_text.py tools/fetch/test_pub_text.py tools/fetch/test_ocr.py tools/fetch/test_mend.py
         working-directory: .
 
   rust:

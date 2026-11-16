@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { applyAnswer, emptyUserData, type UserData } from '../core/progress';
@@ -102,6 +102,16 @@ describe('ProgressView', () => {
     };
     return { d, pack };
   };
+
+  it('у слабой темы есть ссылка на норму, она открывает библиотеку на опорном разделе', async () => {
+    const { d, pack } = answered();
+    pack.topicDocs = { 'K/a': { id: 'tk-rf', anchor: 'st-114' } };
+    const onOpenLibrary = vi.fn();
+    mount(<ProgressView onTrain={() => {}} onOpenLibrary={onOpenLibrary} />, pack, createFakeStore(JSON.stringify(d)));
+    await userEvent.click(await screen.findByRole('button', { name: 'Открыть норму по теме «K: тема А»' }));
+    expect(onOpenLibrary).toHaveBeenCalledWith({ docId: 'tk-rf', anchor: 'st-114' });
+    expect(screen.queryByRole('button', { name: 'Открыть норму по теме «K: тема Б»' })).not.toBeInTheDocument();
+  });
 
   it('без ответов объясняет, что здесь будет', async () => {
     mount(<ProgressView onTrain={() => {}} />);

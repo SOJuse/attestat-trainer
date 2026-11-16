@@ -140,16 +140,18 @@ const ModuleInfo = z
   .object({
     title: text,
     ready: z.boolean(),
-    topics: z.array(z.object({ id: slug, title: text }).strict()),
-  })
-  .strict();
+    // незнакомые поля здесь не ошибка: база публикуется раньше, чем выходит программа, которая их понимает
+    topics: z.array(z.object({ id: slug, title: text })),
+  });
 
 const Envelope = z.object({
   schemaVersion: z.literal(TASKS_SCHEMA),
   packVersion: z.string().regex(/^\d{4}\.\d{2}\.\d{2}\.\d+$/),
   /** пробная база: мини-тесты открыты на тех заданиях, что есть; экзамен и прогноз закрыты */
   pilot: z.boolean(),
-  modules: z.object({ K: ModuleInfo, R: ModuleInfo, P: ModuleInfo, Rez: ModuleInfo, I: ModuleInfo }).strict(),
+  modules: z.object({ K: ModuleInfo, R: ModuleInfo, P: ModuleInfo, Rez: ModuleInfo, I: ModuleInfo }),
+  /** главный раздел нормы для темы, ключ «модуль/тема»: с него «Прогресс» открывает библиотеку */
+  topicDocs: z.record(z.string(), z.object({ id: slug, anchor: text })).default({}),
   /** документы, на которые ссылаются задания: подпись под цитатой не зависит от того, скачана ли библиотека */
   docs: z.record(z.string(), z.object({ title: text, ocr: z.boolean() }).strict()).default({}),
   tasks: z.array(z.unknown()),

@@ -117,12 +117,13 @@ describe('TaskView', () => {
   });
 
   it('sequence: стрелка вниз на шаге опускает его', async () => {
-    show(sequence, { random: identity }); // порядок как в задании
+    show(sequence, { random: identity }); // сдвиг по кругу: Б, В, А
     const list = screen.getByRole('list', { name: 'Порядок шагов' });
     const first = within(list).getAllByRole('listitem')[0];
+    expect(first).toHaveTextContent('Шаг Б');
     within(first).getByRole('button', { name: 'Ниже' }).focus();
     await userEvent.keyboard('{ArrowDown}');
-    expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('Шаг А');
+    expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('Шаг Б');
   });
 
   it('matching: к каждой левой части выбирается правая', async () => {
@@ -257,5 +258,34 @@ describe('TaskView: разбор в протоколе', () => {
   it('задание без ответа помечено', () => {
     show(single, { review: true, onNext: undefined });
     expect(screen.getByRole('status')).toHaveTextContent('Без ответа');
+  });
+});
+
+describe('TaskView: порядок на экзамене', () => {
+  it('показанная расстановка шагов сразу считается ответом', () => {
+    const onAnswered = show(sequence, { mode: 'exam' });
+    expect(onAnswered).toHaveBeenCalledTimes(1);
+    // расстановка заведомо не верная: балл без действия получить нельзя
+    expect(onAnswered).toHaveBeenCalledWith(false, { type: 'sequence', order: [1, 2, 0] });
+  });
+
+  it('при возврате к заданию ответ не пересылается заново', () => {
+    const onAnswered = show(sequence, { mode: 'exam', initialAnswer: { type: 'sequence', order: [2, 0, 1] } });
+    expect(onAnswered).not.toHaveBeenCalled();
+  });
+});
+
+describe('перемешивание шагов', () => {
+  it('начальная расстановка в задании на порядок никогда не верная', async () => {
+    const { shuffledAway } = await import('./TaskInputs');
+    // генератор, при котором обычное перемешивание оставляет порядок как есть
+    expect(shuffledAway(3, identity)).toEqual([1, 2, 0]);
+    for (let seed = 0; seed < 50; seed++) {
+      let s = seed;
+      const random = () => ((s = (s * 9301 + 49297) % 233280), s / 233280);
+      const order = shuffledAway(4, random);
+      expect([...order].sort()).toEqual([0, 1, 2, 3]);
+      expect(order).not.toEqual([0, 1, 2, 3]);
+    }
   });
 });

@@ -1,0 +1,14 @@
+modules:
+  K:
+    title: Кадры
+    ready: false
+    topics:
+      - { id: otpuska, title: Отпуска, why: Проверка., docs: [{ doc: tk-rf, anchors: [st-256] }] }
+  R: { title: Ресурсы, ready: false, topics: [] }
+  P:
+    title: Процессы
+    ready: false
+    topics:
+      - { id: doshkolnye-gruppy, title: Дошкольные группы, why: Проверка., docs: [{ doc: prikaz-373, anchors: [p-1] }] }
+  Rez: { title: Результаты, ready: false, topics: [] }
+  I: { title: Информация, ready: false, topics: [] }

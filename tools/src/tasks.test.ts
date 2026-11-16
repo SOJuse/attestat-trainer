@@ -66,6 +66,8 @@ describe('buildTasks', () => {
     expect(pack.pilot).toBe(true);
     expect([pack.tasks.length, pack.cases.length, pack.cards.length]).toEqual([3, 1, 1]);
     expect(pack.modules.K.topics).toEqual([{ id: 'otpuska', title: 'Отпуска' }]);
+    // оба задания темы ссылаются на статью 256: она и есть главная норма темы
+    expect(pack.topicDocs['K/otpuska']).toEqual({ id: 'tk-rf', anchor: 'st-256' });
     expect(info.count).toBe(3);
     // у каждой ссылки есть подпись, которая не зависит от библиотеки
     const used = new Set(pack.tasks.flatMap((t) => t.refs.map((r) => r.doc)));

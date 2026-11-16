@@ -1,3 +1,4 @@
+import { originalEditionRefs } from './stale';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { listDocIds, loadDoc, loadRegistry, loadTopics } from './corpus';
@@ -145,6 +146,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     : [];
   const root = process.argv[2] ?? '..';
   const taskErrors = existsSync(join(root, 'content', 'tasks')) ? validateTasks(root) : [];
+  if (existsSync(join(root, 'content', 'tasks'))) {
+    for (const r of originalEditionRefs(root)) {
+      console.log(`предупреждение: ${r.id} ссылается на ${r.doc} в исходной редакции с поправками: числа и сроки из него брать нельзя`);
+    }
+  }
   [...report.errors, ...topicErrors, ...taskErrors].forEach((e) => console.error('ошибка:', e));
   process.exit(report.errors.length + topicErrors.length + taskErrors.length ? 1 : 0);
 }
