@@ -1,12 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Placeholder } from './components/Placeholder';
 import { SettingsView } from './components/SettingsView';
 import { Sidebar } from './components/Sidebar';
 import { UpdateBanner } from './components/UpdateBanner';
+import { CardsView } from './cards/CardsView';
+import type { TrainingFilter } from './core/session';
 import { ExamView } from './exam/ExamView';
 import { LibraryView, type OpenAt } from './library/LibraryView';
 import type { Platform } from './platform/Platform';
-import { sectionTitle, type SectionId } from './sections';
+import { ProgressView } from './progress/ProgressView';
+import type { SectionId } from './sections';
 import { ActiveSection } from './state/Active';
 import { AppDataProvider } from './state/AppData';
 import { TodayView } from './today/TodayView';
@@ -22,6 +24,13 @@ export default function App({ platform }: { platform: Platform }) {
   const go = (id: SectionId) => {
     setSection(id);
     setVisited((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  // фильтр, с которым открыть тренировку из карты слабых тем; seq пересоздаёт раздел
+  const [trainFilter, setTrainFilter] = useState<{ filter: TrainingFilter; seq: number }>({ filter: {}, seq: 0 });
+  const train = (filter: TrainingFilter) => {
+    setTrainFilter((prev) => ({ filter, seq: prev.seq + 1 }));
+    go('training');
   };
 
   const openLibrary = (at: { docId: string; anchor: string }) => {
@@ -51,10 +60,18 @@ export default function App({ platform }: { platform: Platform }) {
         <UpdateBanner platform={platform} />
         <AppDataProvider platform={platform}>
           {pane('today', <TodayView onOpenLibrary={openLibrary} openExternal={platform.openExternal} />)}
-          {pane('training', <TrainingView onOpenLibrary={openLibrary} openExternal={platform.openExternal} />)}
+          {pane(
+            'training',
+            <TrainingView
+              key={trainFilter.seq}
+              initialFilter={trainFilter.filter}
+              onOpenLibrary={openLibrary}
+              openExternal={platform.openExternal}
+            />,
+          )}
           {pane('exam', <ExamView library={platform.library} openExternal={platform.openExternal} />)}
-          {pane('cards', <Placeholder title={sectionTitle('cards')} />)}
-          {pane('progress', <Placeholder title={sectionTitle('progress')} />)}
+          {pane('cards', <CardsView />)}
+          {pane('progress', <ProgressView onTrain={train} />)}
         </AppDataProvider>
         {pane(
           'library',

@@ -17,7 +17,7 @@ describe('App', () => {
     render(<App platform={createFakePlatform()} />);
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Сегодня');
     await userEvent.click(screen.getByRole('button', { name: 'Карточки' }));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Карточки');
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Карточки');
     expect(screen.getByRole('button', { name: 'Карточки' })).toHaveAttribute('aria-current', 'page');
   });
 
