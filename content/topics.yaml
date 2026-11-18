@@ -201,6 +201,7 @@ modules:
       docs:
       - doc: tk-rf
         anchors:
+        - st-81
         - st-189
         - st-190
         - st-191
@@ -216,6 +217,10 @@ modules:
         - st-244
         - st-247
         - st-248
+        - st-357
+        - st-382
+        - st-387
+        - st-390
       - doc: fz-273
         anchors:
         - st-45
