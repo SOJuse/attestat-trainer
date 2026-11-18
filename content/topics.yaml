@@ -9,7 +9,7 @@
 modules:
   K:
     title: Кадры
-    ready: false
+    ready: true
     topics:
     - id: priem-na-rabotu
       title: Приём на работу и трудовой договор
