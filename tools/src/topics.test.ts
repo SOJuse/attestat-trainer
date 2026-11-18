@@ -6,9 +6,9 @@ import { validateTopics } from './validate';
 const topics = loadTopics('..');
 
 describe('темы по модулям', () => {
-  it('есть все пять модулей, готовых среди них пока нет', () => {
+  it('есть все пять модулей, готов пока только модуль «Кадры»', () => {
     expect(Object.keys(topics.modules).sort()).toEqual([...MODULES].sort());
-    for (const m of MODULES) expect(topics.modules[m].ready).toBe(false);
+    for (const m of MODULES) expect(topics.modules[m].ready).toBe(m === 'K');
   });
 
   it.each(MODULES)('в модуле %s от 6 до 12 тем с уникальными id', (m) => {
