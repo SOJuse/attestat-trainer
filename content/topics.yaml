@@ -514,9 +514,11 @@ modules:
       - doc: tk-rf
         anchors:
         - st-238
+        - st-240
         - st-242
         - st-243
         - st-244
+        - st-246
         - st-247
         - st-248
     - id: platnye-uslugi
@@ -530,6 +532,7 @@ modules:
         - st-101
       - doc: pp-rf-1441
         anchors:
+        - pril-1-p-2
         - pril-1-p-3
         - pril-1-p-4
         - pril-1-p-5
@@ -543,6 +546,7 @@ modules:
         - pril-1-p-16
         - pril-1-p-17
         - pril-1-p-18
+        - pril-1-p-19
         - pril-1-p-20
         - pril-1-p-22
     - id: zakupki-provedenie
