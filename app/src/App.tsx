@@ -6,6 +6,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { CardsView } from './cards/CardsView';
 import type { TrainingFilter } from './core/session';
 import { ExamView } from './exam/ExamView';
+import { InterviewView } from './interview/InterviewView';
 import { LibraryView, type OpenAt } from './library/LibraryView';
 import type { Platform } from './platform/Platform';
 import { ProgressView } from './progress/ProgressView';
@@ -76,6 +77,7 @@ export default function App({ platform }: { platform: Platform }) {
           )}
           {pane('exam', <ExamView library={platform.library} openExternal={platform.openExternal} />)}
           {pane('cards', <CardsView />)}
+          {pane('interview', <InterviewView />)}
           {pane('progress', <ProgressView onTrain={train} onOpenLibrary={openLibrary} />)}
           {progressSlot && createPortal(<ProgressSettings platform={platform} />, progressSlot)}
         </AppDataProvider>

@@ -1071,3 +1071,153 @@ button {
     transition: none !important;
   }
 }
+
+/* ---------- собеседование ---------- */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 32px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs__tab {
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.tabs__tab:hover {
+  color: var(--ink);
+}
+
+.tabs__tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.form {
+  max-width: 70ch;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field--narrow {
+  flex: none;
+  width: 14em;
+}
+
+.qlist,
+.indicators {
+  max-width: 78ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qlist__item,
+.indicator {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.view .qlist__text {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.view .qlist__theses,
+.view .practice__theses {
+  white-space: pre-wrap;
+}
+
+.view .qlist__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+
+.indicators__heading {
+  margin-top: 18px;
+  padding: 8px 0;
+  font-weight: 600;
+}
+
+.view .indicator__title {
+  max-width: none;
+  margin: 0 0 6px;
+}
+
+.indicator__no {
+  display: inline-block;
+  min-width: 2.2em;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.view .indicator__parts {
+  max-width: none;
+  font-size: 15px;
+}
+
+.indicator__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  align-items: flex-start;
+}
+
+.indicator__fields .field {
+  min-width: 16em;
+  margin-bottom: 0;
+}
+
+.view .practice__ask {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.view .practice__clock {
+  margin: 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.memo li {
+  max-width: 70ch;
+  margin-bottom: 6px;
+}
