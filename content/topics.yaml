@@ -414,7 +414,7 @@ modules:
         - st-13-11
   R:
     title: Ресурсы
-    ready: false
+    ready: true
     topics:
     - id: goszadanie-finansy
       title: Государственное задание и финансовое обеспечение учреждения
@@ -505,6 +505,9 @@ modules:
       - doc: fz-273
         anchors:
         - st-102
+      - doc: fz-7
+        anchors:
+        - st-9-2
       - doc: fz-174
         anchors:
         - st-3
@@ -543,6 +546,7 @@ modules:
         - pril-1-p-10
         - pril-1-p-13
         - pril-1-p-14
+        - pril-1-p-15
         - pril-1-p-16
         - pril-1-p-17
         - pril-1-p-18
@@ -1462,7 +1466,7 @@ modules:
         - pril-2-p-12
   I:
     title: Информация
-    ready: false
+    ready: true
     topics:
     - id: soglasie-na-obrabotku-pd
       title: Правовые основания обработки и согласие на обработку персональных данных
