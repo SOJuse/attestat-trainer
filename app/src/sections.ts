@@ -3,6 +3,7 @@ export type SectionId =
   | 'training'
   | 'exam'
   | 'cards'
+  | 'interview'
   | 'library'
   | 'progress'
   | 'settings';
@@ -12,6 +13,7 @@ export const SECTIONS: { id: SectionId; title: string }[] = [
   { id: 'training', title: 'Тренировка' },
   { id: 'exam', title: 'Экзамен' },
   { id: 'cards', title: 'Карточки' },
+  { id: 'interview', title: 'Собеседование' },
   { id: 'library', title: 'Библиотека' },
   { id: 'progress', title: 'Прогресс' },
 ];

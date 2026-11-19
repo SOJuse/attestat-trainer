@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { localDate } from './dates';
+import { InterviewShape } from './interview';
 import { INTERVALS, reviewed, type Srs } from './srs';
 import { MODULE_CODES, type TasksPack } from './taskSchema';
 
@@ -75,6 +76,8 @@ const Shape = z
     settings: z.object({ dailySize: z.number().int().min(5).max(50) }).strict(),
     /** незаконченные сессия и тест живут отдельно: начать одно не значит потерять другое */
     drafts: z.object({ daily: Draft.optional(), exam: Draft.optional() }).strict(),
+    /** подготовка к собеседованию: появляется, когда человек что-то в неё записал */
+    interview: InterviewShape.optional(),
   })
   .strict();
 

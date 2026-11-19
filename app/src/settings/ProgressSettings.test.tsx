@@ -126,6 +126,17 @@ describe('сброс прогресса', () => {
     expect(saved().settings.dailySize).toBe(30);
   });
 
+  it('записи к собеседованию при сбросе остаются', async () => {
+    const interview = { indicators: { '9': { value: '2', note: '' } }, questions: [] };
+    const { saved } = setup({}, { ...withAnswers(3), interview });
+    await userEvent.click(await screen.findByRole('button', { name: 'Сбросить прогресс' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Сброс прогресса' });
+    await userEvent.type(within(dialog).getByRole('textbox'), 'сбросить');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Сбросить' }));
+    await waitFor(() => expect(saved().attempts).toHaveLength(0));
+    expect(saved().interview).toEqual(interview);
+  });
+
   it('отмена ничего не удаляет', async () => {
     const { saved } = setup();
     await userEvent.click(await screen.findByRole('button', { name: 'Сбросить прогресс' }));

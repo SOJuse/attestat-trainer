@@ -9,7 +9,7 @@ describe('App', () => {
     render(<App platform={createFakePlatform()} />);
     const nav = screen.getByRole('navigation', { name: 'Разделы' });
     expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual([
-      'Сегодня', 'Тренировка', 'Экзамен', 'Карточки', 'Библиотека', 'Прогресс',
+      'Сегодня', 'Тренировка', 'Экзамен', 'Карточки', 'Собеседование', 'Библиотека', 'Прогресс',
     ]);
   });
 

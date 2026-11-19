@@ -72,7 +72,9 @@ export function ProgressSettings({ platform }: { platform: Platform }) {
   };
 
   const confirmReset = () => {
-    app.replaceData({ ...emptyUserData(), settings: data.settings });
+    // записи к собеседованию человек вводил сам: сброс прогресса их не трогает
+    const fresh = { ...emptyUserData(), settings: data.settings };
+    app.replaceData(data.interview ? { ...fresh, interview: data.interview } : fresh);
     setDialog({ kind: 'none' });
     setMessage('Прогресс сброшен.');
   };
@@ -135,7 +137,7 @@ export function ProgressSettings({ platform }: { platform: Platform }) {
 
       {dialog.kind === 'reset' && (
         <div className="confirm" role="alertdialog" aria-label="Сброс прогресса">
-          <p>Все ответы, очередь повторений и история экзаменов будут удалены. Чтобы подтвердить, введите слово «{WORD}».</p>
+          <p>Все ответы, очередь повторений и история экзаменов будут удалены. Записи к собеседованию останутся. Чтобы подтвердить, введите слово «{WORD}».</p>
           <input
             type="text"
             className="number__field settings__word"
