@@ -13,6 +13,7 @@ import {
   type Mode,
   type UserData,
 } from '../core/progress';
+import { emptyInterview, type Interview } from '../core/interview';
 import type { TasksPack } from '../core/taskSchema';
 import type { DocInfo } from '../platform/Library';
 import type { Platform } from '../platform/Platform';
@@ -34,6 +35,8 @@ export type AppData = {
   finishExam: (record: ExamRecord, answers: { id: string; revision: number; correct: boolean }[]) => void;
   setSettings: (settings: UserData['settings']) => void;
   replaceData: (data: UserData) => void;
+  /** Меняет записи подготовки к собеседованию. */
+  updateInterview: (fn: (interview: Interview) => Interview) => void;
 };
 
 const Context = createContext<AppData | null>(null);
@@ -216,6 +219,12 @@ export function AppDataProvider({ platform, children, now = realNow, random = Ma
         }),
       setSettings: (settings: UserData['settings']) => change((d) => ({ ...d, settings })),
       replaceData: (data: UserData) => change(() => data),
+      updateInterview: (fn: (interview: Interview) => Interview) =>
+        change((d) => {
+          const prev = d.interview ?? emptyInterview();
+          const next = fn(prev);
+          return next === prev ? d : { ...d, interview: next };
+        }),
     }),
     [change, now],
   );
