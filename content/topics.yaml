@@ -414,13 +414,16 @@ modules:
         - st-13-11
   R:
     title: Ресурсы
-    ready: false
+    ready: true
     topics:
     - id: goszadanie-finansy
       title: Государственное задание и финансовое обеспечение учреждения
       why: Проверяет, как директор выполняет и меняет госзадание, распоряжается субсидиями и доходами через лицевые
         счета, отчитывается о расходовании средств и не допускает нецелевого использования и нарушений учёта.
       docs:
+      - doc: fz-7
+        anchors:
+        - st-9-2
       - doc: fz-83
         anchors:
         - st-6
@@ -451,6 +454,10 @@ modules:
         совета, как оформить полномочия представителей и электронную подпись и чем грозит нарушение порядка самому
         руководителю.
       docs:
+      - doc: fz-7
+        anchors:
+        - st-9-2
+        - st-27
       - doc: fz-174
         anchors:
         - st-8
@@ -498,6 +505,9 @@ modules:
       - doc: fz-273
         anchors:
         - st-102
+      - doc: fz-7
+        anchors:
+        - st-9-2
       - doc: fz-174
         anchors:
         - st-3
@@ -507,9 +517,11 @@ modules:
       - doc: tk-rf
         anchors:
         - st-238
+        - st-240
         - st-242
         - st-243
         - st-244
+        - st-246
         - st-247
         - st-248
     - id: platnye-uslugi
@@ -523,6 +535,7 @@ modules:
         - st-101
       - doc: pp-rf-1441
         anchors:
+        - pril-1-p-2
         - pril-1-p-3
         - pril-1-p-4
         - pril-1-p-5
@@ -533,8 +546,11 @@ modules:
         - pril-1-p-10
         - pril-1-p-13
         - pril-1-p-14
+        - pril-1-p-15
+        - pril-1-p-16
         - pril-1-p-17
         - pril-1-p-18
+        - pril-1-p-19
         - pril-1-p-20
         - pril-1-p-22
     - id: zakupki-provedenie
@@ -694,6 +710,7 @@ modules:
         - pril-1-p-5
         - pril-1-p-12
         - pril-1-p-16
+        - pril-1-p-17
         - pril-1-p-45
         - pril-1-p-48
         - pril-1-p-251
@@ -1449,7 +1466,7 @@ modules:
         - pril-2-p-12
   I:
     title: Информация
-    ready: false
+    ready: true
     topics:
     - id: soglasie-na-obrabotku-pd
       title: Правовые основания обработки и согласие на обработку персональных данных
@@ -1566,6 +1583,9 @@ modules:
         как работает с итогами независимой оценки качества и когда отказ гражданину или организации в информации
         незаконен.
       docs:
+      - doc: fz-59
+        anchors:
+        - st-2
       - doc: fz-7
         anchors:
         - st-32
@@ -1625,6 +1645,7 @@ modules:
         - st-14
         - st-15
         - st-16
+        - st-10
     - id: elektronnaya-podpis-i-edo
       title: Электронная подпись и электронный документооборот
       why: Какой вид электронной подписи нужен для документа, где школа и руководитель получают квалифицированную
